@@ -1,0 +1,1651 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<title>型替えボード</title>
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="apple-touch-icon" href="icon-180.png">
+<meta name="theme-color" content="#0f6e6a">
+<style>
+:root{
+  --bg:#f3f1ec;--surface:#ffffff;--surface2:#f8f7f3;--ink:#1d2329;--ink2:#5b6570;--line:#dcd8cf;
+  --accent:#0f6e6a;--accent-ink:#ffffff;--accent-soft:#dcefed;
+  --warn:#b4540a;--warn-soft:#fdeedd;--bad:#b3261e;--bad-soft:#fbe3e1;--ok:#2e7d32;--ok-soft:#e3f2e4;
+  --run:#1f5fae;--run-soft:#e1ecfa;--shadow:0 1px 3px rgba(0,0,0,.08),0 2px 10px rgba(0,0,0,.05);
+}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){
+  --bg:#14181c;--surface:#1e2429;--surface2:#252c32;--ink:#e8ecef;--ink2:#a2adb7;--line:#36404a;
+  --accent:#4fb3ad;--accent-ink:#0b1a19;--accent-soft:#1c3634;
+  --warn:#f0a35a;--warn-soft:#3a2a18;--bad:#f2867f;--bad-soft:#3d1f1d;--ok:#7cc47f;--ok-soft:#1d321e;
+  --run:#7fb0ef;--run-soft:#1b2b40;--shadow:none;}}
+*{box-sizing:border-box}
+html,body{margin:0;background:var(--bg);color:var(--ink);font-family:-apple-system,"Hiragino Sans","Noto Sans JP","Yu Gothic UI",Meiryo,sans-serif;font-size:15px;-webkit-text-size-adjust:100%}
+button,input,select,textarea{font:inherit;color:inherit}
+button{-webkit-touch-callout:none;user-select:none;-webkit-user-select:none;cursor:pointer}
+header{position:sticky;top:0;z-index:20;background:var(--surface);border-bottom:1px solid var(--line);padding:8px 12px calc(8px);display:flex;align-items:center;gap:8px;flex-wrap:wrap}
+header h1{font-size:17px;margin:0 6px 0 0;letter-spacing:.04em;white-space:nowrap}
+.datebar{display:flex;align-items:center;gap:4px}
+.datebar input{border:1px solid var(--line);background:var(--surface2);border-radius:10px;padding:7px 8px;min-height:40px}
+.ib{min-width:40px;min-height:40px;border:1px solid var(--line);background:var(--surface2);border-radius:10px;font-weight:700}
+.sp{flex:1}
+main{padding:12px 12px 96px;max-width:1280px;margin:0 auto}
+.card{background:var(--surface);border:1px solid var(--line);border-radius:14px;box-shadow:var(--shadow);padding:14px;margin-bottom:12px}
+.card h2{font-size:16px;margin:0 0 10px;display:flex;align-items:center;gap:8px;flex-wrap:wrap}
+.card h2 small{font-weight:400;color:var(--ink2);font-size:12px}
+.muted{color:var(--ink2);font-size:13px}
+.tab-off{display:none!important}
+nav.tabs{position:fixed;left:0;right:0;bottom:0;z-index:30;background:var(--surface);border-top:1px solid var(--line);display:grid;grid-template-columns:repeat(6,1fr);padding-bottom:env(safe-area-inset-bottom)}
+nav.tabs button{border:0;background:none;padding:8px 2px 9px;font-size:12px;color:var(--ink2);display:flex;flex-direction:column;align-items:center;gap:2px;min-height:56px}
+nav.tabs button b{font-size:19px;line-height:1}
+nav.tabs button.on{color:var(--accent);font-weight:700;box-shadow:inset 0 3px 0 var(--accent)}
+.btn{border:1px solid var(--line);background:var(--surface2);border-radius:10px;padding:9px 14px;min-height:42px;font-weight:600}
+.btn.pri{background:var(--accent);color:var(--accent-ink);border-color:var(--accent)}
+.btn.bad{color:var(--bad);border-color:var(--bad)}
+.btn.sm{min-height:34px;padding:5px 10px;font-size:13px}
+.row{display:flex;gap:8px;flex-wrap:wrap;align-items:center}
+.warnbox{background:var(--warn-soft);color:var(--warn);border-radius:10px;padding:8px 12px;font-size:13px;margin:6px 0}
+.warnbox.bad{background:var(--bad-soft);color:var(--bad)}
+.okbox{background:var(--ok-soft);color:var(--ok);border-radius:10px;padding:8px 12px;font-size:13px;margin:6px 0}
+/* week grid */
+.wk-wrap{overflow-x:auto;-webkit-overflow-scrolling:touch;border-radius:10px;border:1px solid var(--line)}
+table.wk{border-collapse:collapse;width:100%;min-width:860px;table-layout:fixed;background:var(--surface)}
+table.wk th,table.wk td{border:1px solid var(--line);vertical-align:top;padding:4px}
+table.wk thead th{background:var(--surface2);font-size:13px;padding:6px 4px;position:sticky;top:0}
+table.wk thead th.today{background:var(--accent-soft);color:var(--accent)}
+table.wk th.mc{width:52px;font-size:16px;background:var(--surface2)}
+table.wk td{height:74px;cursor:pointer}
+table.wk td:hover{background:var(--surface2)}
+.run{font-size:12px;color:var(--ink2);margin-bottom:3px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.chip{display:block;border-radius:8px;padding:4px 6px;margin-bottom:3px;font-size:12.5px;line-height:1.3;background:var(--run-soft);color:var(--run);border:1px solid transparent;text-align:left;width:100%}
+.chip b{font-size:13.5px}
+.chip.late{background:var(--warn-soft);color:var(--warn)}
+.chip.done{background:var(--ok-soft);color:var(--ok)}
+.chip .q{opacity:.8}
+.plus{color:var(--ink2);font-size:18px;text-align:center;opacity:.35}
+/* sheet (modal) */
+.sheet-bg{position:fixed;inset:0;background:rgba(0,0,0,.42);z-index:50;display:none}
+.sheet{position:fixed;left:0;right:0;bottom:0;z-index:51;background:var(--surface);border-radius:18px 18px 0 0;max-height:92vh;overflow:auto;padding:14px 16px calc(18px + env(safe-area-inset-bottom));display:none;max-width:860px;margin:0 auto;box-shadow:0 -6px 30px rgba(0,0,0,.2)}
+.sheet.on,.sheet-bg.on{display:block}
+.sheet h3{margin:0 0 10px;font-size:17px;display:flex;align-items:center;gap:8px}
+.grid2{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:10px}
+label.f{display:flex;flex-direction:column;gap:4px;font-size:12px;color:var(--ink2)}
+label.f input,label.f select,label.f textarea{border:1px solid var(--line);background:var(--surface2);border-radius:10px;padding:8px 10px;min-height:44px;font-size:16px;color:var(--ink)}
+label.f textarea{min-height:64px}
+.chips{display:flex;gap:6px;flex-wrap:wrap}
+.chips button{border:1px solid var(--line);background:var(--surface2);border-radius:999px;padding:7px 14px;min-height:40px}
+.chips button.on{background:var(--accent);color:var(--accent-ink);border-color:var(--accent);font-weight:700}
+.moldinfo{background:var(--surface2);border-radius:10px;padding:8px 10px;font-size:13px;margin-top:6px;line-height:1.6}
+.stafftbl{width:100%;border-collapse:collapse;margin-top:6px}
+.stafftbl td{padding:4px 2px;font-size:14px}
+.stafftbl select{width:100%;border:1px solid var(--line);background:var(--surface2);border-radius:8px;min-height:40px;padding:4px 6px;font-size:15px}
+/* instruction table */
+table.sj{border-collapse:collapse;width:100%;font-size:13px;background:var(--surface)}
+table.sj th,table.sj td{border:1px solid var(--line);padding:4px 5px;text-align:center;vertical-align:middle}
+table.sj thead th{background:var(--surface2);font-size:12px}
+table.sj td.mold{font-weight:700;line-height:1.3;white-space:nowrap}
+table.sj td.big{font-size:18px;font-weight:800}
+table.sj td.l{text-align:left}
+.sj-wrap{overflow-x:auto}
+.legend{font-size:12px;color:var(--ink2);margin:6px 0 10px;line-height:1.6}
+/* actual cards */
+.acts{display:grid;grid-template-columns:repeat(auto-fill,minmax(330px,1fr));gap:12px}
+.act{border:1px solid var(--line);border-radius:14px;padding:12px;background:var(--surface)}
+.act.st-run{border-color:var(--run);box-shadow:0 0 0 2px var(--run-soft)}
+.act.st-done{border-color:var(--ok)}
+.act-h{display:flex;align-items:baseline;gap:8px;margin-bottom:6px}
+.act-h .mcno{font-size:26px;font-weight:800;color:var(--accent)}
+.act-h .mm{font-size:15px;font-weight:700}
+.badge{font-size:11px;border-radius:999px;padding:2px 8px;background:var(--surface2);color:var(--ink2);border:1px solid var(--line)}
+.badge.run{background:var(--run-soft);color:var(--run);border-color:transparent}
+.badge.done{background:var(--ok-soft);color:var(--ok);border-color:transparent}
+.badge.warn{background:var(--warn-soft);color:var(--warn);border-color:transparent}
+.step{display:grid;grid-template-columns:86px 1fr auto;gap:6px;align-items:center;padding:6px 0;border-top:1px dashed var(--line)}
+.step .nm{font-size:13px;font-weight:700}
+.step .who{font-size:12px;color:var(--ink2)}
+.tbtns{display:flex;gap:6px}
+.tb{min-width:74px;min-height:46px;border-radius:10px;border:1px solid var(--line);background:var(--surface2);font-size:13px;line-height:1.15;padding:3px 6px}
+.tb.set{background:var(--run-soft);color:var(--run);border-color:transparent;font-weight:700;font-size:15px}
+.tb.set.e{background:var(--ok-soft);color:var(--ok)}
+.tb small{display:block;font-size:10px;font-weight:400;opacity:.8}
+.checks{display:flex;gap:6px;flex-wrap:wrap;margin-top:8px}
+.ck{border:1px solid var(--line);background:var(--surface2);border-radius:10px;padding:7px 10px;min-height:42px;font-size:13px}
+.ck.on{background:var(--ok-soft);color:var(--ok);border-color:transparent;font-weight:700}
+.ck.due{background:var(--warn-soft);color:var(--warn);border-color:var(--warn)}
+/* stats */
+.kpis{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:10px;margin-bottom:12px}
+.kpi{background:var(--surface);border:1px solid var(--line);border-radius:12px;padding:10px 12px}
+.kpi .v{font-size:26px;font-weight:800}
+.kpi .k{font-size:12px;color:var(--ink2)}
+table.st{border-collapse:collapse;width:100%;font-size:13px}
+table.st th,table.st td{border-bottom:1px solid var(--line);padding:6px 6px;text-align:right}
+table.st th:first-child,table.st td:first-child{text-align:left}
+table.st thead th{color:var(--ink2);font-weight:600;font-size:12px}
+.bar{height:10px;border-radius:5px;background:var(--accent);display:inline-block;vertical-align:middle}
+.bar.w{background:var(--warn)}
+.hours{display:flex;align-items:flex-end;gap:3px;height:120px;padding-top:6px}
+.hours div{flex:1;background:var(--accent);border-radius:4px 4px 0 0;position:relative;min-height:1px}
+.hours div.late{background:var(--warn)}
+.hours div span{position:absolute;bottom:-18px;left:0;right:0;text-align:center;font-size:10px;color:var(--ink2)}
+.hours div i{position:absolute;top:-16px;left:0;right:0;text-align:center;font-size:10px;font-style:normal;color:var(--ink2)}
+/* master */
+table.ms{border-collapse:collapse;width:100%;font-size:13px}
+table.ms th,table.ms td{border-bottom:1px solid var(--line);padding:6px 4px;text-align:left}
+table.ms tr{cursor:pointer}
+table.ms tr:hover td{background:var(--surface2)}
+.search{border:1px solid var(--line);background:var(--surface2);border-radius:10px;padding:8px 10px;min-height:44px;font-size:16px;flex:1;min-width:160px}
+/* help */
+.tip{position:fixed;z-index:80;max-width:300px;background:var(--ink);color:var(--surface);border-radius:12px;padding:10px 12px;font-size:13px;line-height:1.5;box-shadow:0 6px 24px rgba(0,0,0,.3);display:none}
+.tip b{display:block;margin-bottom:3px;font-size:14px}
+details.qa{border:1px solid var(--line);border-radius:10px;margin-bottom:8px;background:var(--surface2)}
+details.qa summary{padding:10px 12px;font-weight:700;cursor:pointer;min-height:44px}
+details.qa div{padding:0 12px 12px;font-size:14px;line-height:1.7}
+.toast{position:fixed;left:50%;bottom:84px;transform:translateX(-50%);background:var(--ink);color:var(--surface);padding:10px 16px;border-radius:999px;font-size:14px;z-index:90;opacity:0;transition:opacity .25s;pointer-events:none}
+.toast.on{opacity:1}
+/* print */
+#printArea{display:none;-webkit-print-color-adjust:exact;print-color-adjust:exact}
+@media print{
+  body *{visibility:hidden}
+  #printArea,#printArea *{visibility:visible}
+  #printArea{display:block;position:absolute;left:0;top:0;width:100%;color:#000;background:#fff}
+  header,nav,main,.sheet,.sheet-bg{display:none!important}
+  .pp{page-break-after:always}
+  .pp:last-child{page-break-after:auto}
+}
+.p-sj{font-family:"Yu Gothic","Hiragino Sans",sans-serif;color:#000}
+.p-sj h1{font-size:18px;margin:0 0 4px;display:flex;gap:20px;align-items:baseline}
+.p-sj .def{font-size:10px;margin-bottom:4px}
+.p-sj table{border-collapse:collapse;width:100%;font-size:11px}
+.p-sj th,.p-sj td{border:1px solid #000;padding:2px 3px;text-align:center;height:19px}
+.p-sj td.mold{font-weight:700;font-size:12px;line-height:1.2}
+.p-sj td.mc{font-size:16px;font-weight:800}
+.p-nippo{font-family:"Yu Gothic","Hiragino Sans",sans-serif;color:#000;height:136mm;overflow:hidden;border-bottom:1px dashed #999;padding-top:3mm}
+.p-nippo table{border-collapse:collapse;width:100%;font-size:10.5px}
+.p-nippo th,.p-nippo td{border:1px solid #000;padding:2px 3px;text-align:center;height:17px}
+.p-nippo .hd td{font-size:12px;height:24px}
+.p-nippo .hd td.v{font-size:15px;font-weight:800}
+.p-nippo .l{text-align:left}
+/* ===== 日報記録 ===== */
+ruby rt{font-size:.55em;color:var(--ink2)}
+.npcards{display:grid;grid-template-columns:repeat(auto-fill,minmax(250px,1fr));gap:10px;margin-top:10px}
+.npc{display:flex;flex-direction:column;justify-content:flex-start;border:1px solid var(--line);border-radius:14px;padding:12px;background:var(--surface);text-align:left;width:100%;min-height:120px}
+.npc .top{display:flex;align-items:baseline;gap:8px}
+.npc .mcno{font-size:26px;font-weight:800;color:var(--accent)}
+.npc .code{font-weight:700;font-size:15px}
+.npc .meta{font-size:12px;color:var(--ink2);margin:2px 0 6px}
+.npc .bars{display:flex;gap:6px;flex-wrap:wrap}
+.npc.alert{border-color:var(--warn);box-shadow:0 0 0 2px var(--warn-soft)}
+.npc.bad{border-color:var(--bad);box-shadow:0 0 0 2px var(--bad-soft)}
+.nd-head{display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin-bottom:8px}
+.nd-head .mcno{font-size:30px;font-weight:800;color:var(--accent)}
+.nd-head .code{font-size:20px;font-weight:800}
+.seg{display:grid;grid-template-columns:repeat(5,1fr);gap:4px;background:var(--surface2);border:1px solid var(--line);border-radius:12px;padding:4px;margin:6px 0 12px;}
+.seg button{border:0;background:none;border-radius:9px;min-height:46px;font-weight:700;font-size:14px;color:var(--ink2)}
+.seg button.on{background:var(--accent);color:var(--accent-ink)}
+.seg button .n{display:block;font-size:11px;font-weight:400}
+.slots{display:grid;grid-template-columns:repeat(12,1fr);gap:3px;margin:6px 0 10px}
+.slots div{border:1px solid var(--line);border-radius:8px;text-align:center;padding:4px 0;font-size:11px;background:var(--surface2);min-height:44px}
+.slots div b{display:block;font-size:12px}
+.slots div.done{background:var(--ok-soft);color:var(--ok);border-color:transparent}
+.slots div.ng{background:var(--bad-soft);color:var(--bad);border-color:transparent}
+.slots div.due{border:2px solid var(--warn);color:var(--warn)}
+.bigbtn{width:100%;min-height:64px;font-size:19px;font-weight:800;border-radius:14px;border:0;background:var(--accent);color:var(--accent-ink)}
+.cklist{display:grid;gap:6px}
+.ckit{display:grid;grid-template-columns:1fr auto;gap:8px;align-items:center;border:1px solid var(--line);border-radius:12px;padding:8px 10px;background:var(--surface2)}
+.ckit.on{background:var(--ok-soft);border-color:transparent}
+.ckit.na{opacity:.6}
+.ckit .tx{font-size:14px;line-height:1.55}
+.ckit .bt{display:flex;gap:6px}
+.ckb{min-width:64px;min-height:48px;border-radius:10px;border:1px solid var(--line);background:var(--surface);font-weight:700}
+.ckb.on{background:var(--ok);color:#fff;border-color:var(--ok)}
+.ckb.na.on{background:var(--ink2);border-color:var(--ink2)}
+.ckb.ngb.on{background:var(--bad);border-color:var(--bad)}
+.tgrid{display:grid;grid-template-columns:auto 1fr 1fr;gap:6px;align-items:center}
+.tgrid .lb{font-size:14px;font-weight:600}
+.tg{min-height:48px;border-radius:10px;border:1px solid var(--line);background:var(--surface2);font-weight:700}
+.tg.on{background:var(--ok-soft);color:var(--ok);border-color:transparent}
+.stepper{display:flex;align-items:center;gap:6px}
+.stepper button{width:52px;height:52px;border-radius:12px;border:1px solid var(--line);background:var(--surface2);font-size:24px;font-weight:800}
+.stepper input{width:84px;text-align:center;font-size:22px;font-weight:800;border:1px solid var(--line);border-radius:12px;min-height:52px;background:var(--surface)}
+.stepper .u{font-size:14px;color:var(--ink2)}
+.okng{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+.okng button{min-height:64px;font-size:22px;font-weight:800;border-radius:14px;border:2px solid var(--line);background:var(--surface2)}
+.okng button.on.ok{background:var(--ok);color:#fff;border-color:var(--ok)}
+.okng button.on.ng{background:var(--bad);color:#fff;border-color:var(--bad)}
+table.pt{border-collapse:collapse;width:100%;font-size:13px}
+table.pt th,table.pt td{border-bottom:1px solid var(--line);padding:7px 4px;text-align:center}
+table.pt tr.row-ng td{background:var(--bad-soft)}
+table.pt tr{cursor:pointer}
+.sec-t{font-size:15px;font-weight:800;margin:14px 0 6px;display:flex;gap:8px;align-items:center}
+.p-nippo .ckc{font-size:10px;text-align:left;line-height:1.25;padding:1px 3px;height:auto}
+.p-nippo .ckm{width:16px;font-size:11px}
+
+/* ===== 条件・タイムライン ===== */
+table.cm{border-collapse:collapse;font-size:13px;background:var(--surface);min-width:100%}
+table.cm th,table.cm td{border:1px solid var(--line);padding:4px 6px;text-align:center;white-space:nowrap}
+table.cm th{background:var(--surface2);font-size:11.5px;line-height:1.25;cursor:pointer}
+table.cm td.l,table.cm th.l{text-align:left}
+.j-out,table.cm td.j-out,tr.j-out td{background:var(--bad-soft)!important;color:var(--bad);font-weight:800}
+.j-diff,table.cm td.j-diff,tr.j-diff td{background:var(--warn-soft)!important;color:var(--warn);font-style:italic}
+table.cdr{border-collapse:collapse;width:100%;font-size:14px}
+table.cdr th,table.cdr td{border-bottom:1px solid var(--line);padding:4px;text-align:center}
+table.cdr td.l{text-align:left}
+table.cdr input{width:100%;min-width:70px;border:1px solid var(--line);border-radius:8px;min-height:42px;font-size:17px;text-align:center;background:var(--surface);color:var(--ink)}
+.gantt{position:relative;border:1px solid var(--line);border-radius:10px;padding:22px 8px 8px;background:var(--surface2)}
+.gx{position:relative;height:0;margin-left:64px}
+.gx span{position:absolute;top:-18px;font-size:10px;color:var(--ink2);transform:translateX(-50%)}
+.gr{display:flex;align-items:center;margin:4px 0}
+.gl{width:56px;font-size:12px;color:var(--ink2);flex:none;margin-right:8px}
+.gb{position:relative;flex:1;height:26px;background:var(--surface);border-radius:6px}
+.gb i{position:absolute;top:2px;bottom:2px;border-radius:5px;background:var(--accent);color:#fff;font-size:10.5px;font-style:normal;line-height:22px;overflow:hidden;white-space:nowrap;padding:0 4px}
+.gb i.plan{background:transparent;border:2px dashed var(--ink2);color:var(--ink2);line-height:18px}
+.gb b.mk{position:absolute;top:5px;width:10px;height:16px;margin-left:-5px;border-radius:3px;background:var(--ok)}
+.gb b.mk.risk{background:var(--bad)}.gb b.mk.cd{background:var(--run)}
+.gnow{position:absolute;top:14px;bottom:4px;width:2px;background:var(--bad)}
+.tlg{font-size:13px;font-weight:800;color:var(--accent);margin-top:6px}
+.tlog{border-left:3px solid var(--line);margin-left:6px;padding-left:10px}
+.te{display:grid;grid-template-columns:52px 52px 1fr;gap:6px;padding:5px 0;font-size:14px;position:relative}
+.te::before{content:"";position:absolute;left:-17px;top:10px;width:11px;height:11px;border-radius:50%;background:var(--ok)}
+.te.st::before{background:var(--run)}.te.risk::before{background:var(--bad)}.te.cd::before{background:var(--accent)}
+.te .tt{font-weight:800}.te .td{color:var(--ink2);font-size:12px}
+.p-cd,.p-tl{font-family:"Yu Gothic","Hiragino Sans",sans-serif;color:#000}
+.p-cd h1{font-size:20px;letter-spacing:.3em;margin:0 0 6px}
+.p-cd table{border-collapse:collapse;width:100%;font-size:10.5px;margin-bottom:4px}
+.p-cd th,.p-cd td{border:1px solid #000;padding:2px 4px;text-align:center}
+.p-cd .hd td.v{font-weight:800;font-size:13px}
+.p-cd .j-out{background:#ddd!important;color:#000;font-weight:800}
+.p-cd .j-diff{background:#fff!important;color:#000;font-style:italic;text-decoration:underline}
+.p-cd .muted{color:#000;font-size:9px}
+.p-cd .rules{font-size:10px;margin-top:4px;line-height:1.6}
+.p-tl h1{font-size:16px}.p-tl .gb i{color:#fff}
+</style>
+</head>
+<body>
+<header>
+  <h1>🔧 型替えボード</h1>
+  <div class="datebar">
+    <button class="ib" id="dPrev" aria-label="前の日">◀</button>
+    <input type="date" id="dPick">
+    <button class="ib" id="dNext" aria-label="次の日">▶</button>
+    <button class="btn sm" id="dToday">今日</button>
+  </div>
+  <span class="sp"></span>
+  <button class="ib" id="helpBtn" aria-label="使い方">？</button>
+</header>
+
+<main>
+<!-- ===== 週間 ===== -->
+<section data-tabs="week">
+  <div class="card">
+    <h2>週間成形予定 <small id="wkLabel"></small></h2>
+    <div class="row" style="margin-bottom:8px">
+      <button class="btn sm" id="wkPrev">◀ 前の週</button>
+      <button class="btn sm" id="wkNext">次の週 ▶</button>
+      <span class="muted">マスをタップ → 型替えを追加。チップをタップ → 修正。</span>
+    </div>
+    <div id="firstRun"></div>
+    <div class="wk-wrap"><table class="wk" id="wkTbl"></table></div>
+    <div id="wkWarn"></div>
+  </div>
+</section>
+
+<!-- ===== 指示 ===== -->
+<section data-tabs="shiji">
+  <div class="card">
+    <h2>型替指示＆実績確認 <small id="sjDate"></small></h2>
+    <div class="row" style="margin-bottom:6px">
+      <button class="btn pri" id="sjPrint">🖨 印刷（今のExcelと同じ並び）</button>
+      <button class="btn" id="sjAdd">＋ 型替えを追加</button>
+    </div>
+    <div class="legend">①型替準備…ローダー清掃、ホッパー清掃　②型替…金型のせ替え、量産環境準備、清掃　③打ちだし…打ちだし、量産開始、製品チェック（30分後、1時間後）</div>
+    <div id="sjWarn"></div>
+    <div class="sj-wrap"><table class="sj" id="sjTbl"></table></div>
+  </div>
+</section>
+
+<!-- ===== 実績 ===== -->
+<section data-tabs="act">
+  <div class="card">
+    <h2>実績の記録 <small id="actDate"></small></h2>
+    <div class="muted" style="margin-bottom:10px">［開始］［終了］を押すと今の時刻が入ります。時刻を押すと直せます。</div>
+    <div class="acts" id="acts"></div>
+  </div>
+</section>
+
+<!-- ===== 日報 ===== -->
+<section data-tabs="nippo">
+  <div class="card" id="npList">
+    <h2>成形日報 <small id="npDate"></small></h2>
+    <div class="muted">号機を押すと記録画面になります。巡回（2時間ごと）・打出確認・材料・型温・異常をタップで残せます。</div>
+    <div class="row" style="margin-top:8px">
+      <button class="btn sm" id="npFuri">ふりがな：切</button>
+      <button class="btn sm" id="npCsv">⬇ 日報CSV（集計タブの期間）</button>
+      <button class="btn sm" id="cdCsv">⬇ 条件記録CSV</button>
+    </div>
+    <div class="npcards" id="npCards"></div>
+    <div class="sec-t" style="margin-top:18px">🖨 印刷</div>
+    <div class="muted" style="margin-bottom:6px">記録した内容は記入済みで印刷されます。まだ記録していない号機は白紙の日報になります。</div>
+    <div class="chips" id="npMcs"></div>
+    <div class="row" style="margin-top:10px">
+      <button class="btn pri" id="npPrint">🖨 選んだ号機の日報を印刷</button>
+      <button class="btn sm" id="npAll">全部選ぶ</button>
+      <button class="btn sm" id="npNone">全部外す</button>
+    </div>
+  </div>
+  <div class="card tab-off" id="npDetail"></div>
+</section>
+
+<!-- 巡回シート -->
+<div class="sheet" id="ptSheet">
+  <h3><span id="ptTitle">巡回を記録</span><span class="sp"></span><button class="ib" id="ptClose">✕</button></h3>
+  <div class="grid2">
+    <label class="f">時刻<input type="time" id="ptT"></label>
+    <label class="f" id="ptSerialL">連番<input type="number" inputmode="numeric" id="ptSerial"></label>
+  </div>
+  <div class="sec-t" id="ptJudgeL">製品の判定</div>
+  <div class="okng"><button class="ok" data-v="OK">OK</button><button class="ng" data-v="NG">NG</button></div>
+  <div class="sec-t" id="ptChkL">確認</div>
+  <div class="grid2" id="ptToggles"></div>
+  <div class="grid2" style="margin-top:8px">
+    <div><div class="sec-t" id="ptMatL">材料残数</div><div class="stepper" data-st="mat"><button>−</button><input type="number" inputmode="numeric" id="ptMat"><button>＋</button><span class="u">本</span></div></div>
+    <div><div class="sec-t" id="ptBagL">バッチ袋残数</div><div class="stepper" data-st="bag"><button>−</button><input type="number" inputmode="numeric" id="ptBag"><button>＋</button><span class="u">袋</span></div></div>
+  </div>
+  <div id="ptWarn"></div>
+  <div class="sec-t" id="ptByL">印（記録した人）</div>
+  <div class="chips" id="ptBy"></div>
+  <div class="row" style="margin-top:14px">
+    <button class="btn pri" id="ptSave" style="flex:1;min-height:56px;font-size:17px">記録する</button>
+    <button class="btn bad" id="ptDel">削除</button>
+  </div>
+</div>
+
+<!-- 異常シート -->
+<div class="sheet" id="abSheet">
+  <h3><span>異常報告</span><span class="sp"></span><button class="ib" id="abClose">✕</button></h3>
+  <div class="grid2">
+    <label class="f">時刻<input type="time" id="abT"></label>
+    <label class="f">捨てショット数（チョコ停止時）<input type="number" inputmode="numeric" id="abShots"></label>
+  </div>
+  <div class="sec-t">異常内容</div>
+  <div class="chips" id="abKinds"></div>
+  <label class="f" style="margin-top:8px">くわしく<textarea id="abText"></textarea></label>
+  <div class="sec-t">対処</div>
+  <div class="chips" id="abActs"></div>
+  <label class="f" style="margin-top:8px">くわしく<textarea id="abAct"></textarea></label>
+  <div class="sec-t">報告者</div>
+  <div class="chips" id="abBy"></div>
+  <div class="row" style="margin-top:14px">
+    <button class="btn pri" id="abSave" style="flex:1;min-height:56px;font-size:17px">記録する</button>
+    <button class="btn bad" id="abDel">削除</button>
+  </div>
+</div>
+
+<!-- ===== 集計 ===== -->
+<section data-tabs="stat">
+  <div class="card">
+    <h2>型替ロス集計</h2>
+    <div class="row" style="margin-bottom:10px">
+      <label class="f" style="flex:0 0 auto">から<input type="date" id="stFrom"></label>
+      <label class="f" style="flex:0 0 auto">まで<input type="date" id="stTo"></label>
+      <button class="btn sm" id="st30">直近30日</button>
+      <button class="btn sm" id="stCsv">⬇ CSV（Excelで開けます）</button>
+    </div>
+    <div class="kpis" id="stKpi"></div>
+    <div id="stNote"></div>
+  </div>
+  <div class="card"><h2>号機別 <small>型替ロス＝清掃開始〜量産開始の実績時間</small></h2><div style="overflow-x:auto"><table class="st" id="stMc"></table></div></div>
+  <div class="card"><h2>型替えの時間帯 <small>型替開始の時刻。オレンジ＝18時以降</small></h2><div class="hours" id="stHours"></div><div style="height:22px"></div></div>
+  <div class="card"><h2>時間がかかった金型 上位10</h2><div style="overflow-x:auto"><table class="st" id="stMold"></table></div></div>
+  <div class="card"><h2>担当者別（型替メイン）</h2><div style="overflow-x:auto"><table class="st" id="stPpl"></table></div></div>
+</section>
+
+<!-- ===== マスタ ===== -->
+<section data-tabs="master">
+  <div class="card">
+    <h2>金型マスタ <small id="msCount"></small></h2>
+    <div class="row" style="margin-bottom:8px">
+      <input class="search" id="msQ" placeholder="型名・品名・材質で検索">
+      <button class="btn pri" id="msAdd">＋ 金型を追加</button>
+    </div>
+    <div style="overflow-x:auto;max-height:52vh"><table class="ms" id="msTbl"></table></div>
+  </div>
+  <div class="card">
+    <h2>担当者</h2>
+    <label class="f">「、」区切りで入力（型替えの担当の選択肢になります）<input id="pplIn"></label>
+  </div>
+  <div class="card">
+    <h2>号機 <small>いま載っている金型（最初の前型になります）</small></h2>
+    <div class="grid2" id="mcList"></div>
+    <div class="row" style="margin-top:8px"><button class="btn sm" id="mcAdd">＋ 号機を追加</button></div>
+  </div>
+  <div class="card">
+    <h2>標準時間 <small>予定時刻の自動入力に使います</small></h2>
+    <div class="grid2">
+      <label class="f">清掃開始→型替開始（分）<input type="number" id="sPrep" min="0"></label>
+      <label class="f">型替開始→量産開始（分）<input type="number" id="sChg" min="0"></label>
+      <label class="f">型替の手作業時間（分）※担当の重なり判定<input type="number" id="sHand" min="0"></label>
+      <label class="f">日報の最初の確認時刻<input type="time" id="sNippo"></label>
+      <label class="f">これ以降の型替えに注意（時）<input type="number" id="sLate" min="0" max="23"></label>
+    </div>
+  </div>
+  <div class="card">
+    <h2>データの安心</h2>
+    <div class="row">
+      <button class="btn" id="bkOut">⬇ バックアップを書き出す</button>
+      <button class="btn" id="bkIn">⬆ バックアップを読み込む</button>
+      <input type="file" id="bkFile" accept=".json,application/json" style="display:none">
+      <button class="btn" id="sample">お試し用サンプルを表示中の日に入れる</button>
+    </div>
+    <div class="muted" style="margin-top:8px">データはこの端末のブラウザに保存されます。別の端末へ移すときはバックアップを使ってください。</div>
+  </div>
+</section>
+</main>
+
+<nav class="tabs" id="tabs">
+  <button data-t="week"><b>📅</b>週間</button>
+  <button data-t="shiji"><b>📋</b>指示</button>
+  <button data-t="act"><b>⏱</b>実績</button>
+  <button data-t="nippo"><b>🗒</b>日報</button>
+  <button data-t="stat"><b>📊</b>集計</button>
+  <button data-t="master"><b>⚙</b>マスタ</button>
+</nav>
+
+<!-- 型替え編集シート -->
+<div class="sheet-bg" id="sheetBg"></div>
+<div class="sheet" id="edSheet">
+  <h3><span id="edTitle">型替えを追加</span><span class="sp"></span><button class="ib" id="edClose">✕</button></h3>
+  <div class="grid2">
+    <label class="f">日付<input type="date" id="edDate"></label>
+    <label class="f">号機<select id="edMc"></select></label>
+    <label class="f">数量（成形数）<input type="number" id="edQty" inputmode="numeric"></label>
+  </div>
+  <div style="margin:10px 0 4px" class="muted">種別</div>
+  <div class="chips" id="edKind"></div>
+  <div class="grid2" style="margin-top:10px">
+    <label class="f">前の型（自動）<input id="edFrom" list="moldList" autocomplete="off"></label>
+    <label class="f">次の型<input id="edTo" list="moldList" autocomplete="off" placeholder="例 04FN"></label>
+  </div>
+  <div class="moldinfo" id="edInfo"></div>
+  <div class="grid2" style="margin-top:10px">
+    <label class="f">清掃開始<input type="time" id="edT1"></label>
+    <label class="f">型替開始<input type="time" id="edT2"></label>
+    <label class="f">量産開始<input type="time" id="edT3"></label>
+  </div>
+  <div style="margin-top:12px" class="muted">担当（空欄は未定）</div>
+  <table class="stafftbl" id="edStaff"></table>
+  <div id="edWarn"></div>
+  <div class="row" style="margin-top:12px">
+    <button class="btn pri" id="edSave" style="flex:1">保存</button>
+    <button class="btn bad" id="edDel">削除</button>
+  </div>
+</div>
+
+<!-- 金型編集シート -->
+<div class="sheet" id="mdSheet">
+  <h3><span id="mdTitle">金型</span><span class="sp"></span><button class="ib" id="mdClose">✕</button></h3>
+  <div class="grid2">
+    <label class="f">型名（整番）<input id="mdCode"></label>
+    <label class="f">製品名<input id="mdName"></label>
+    <label class="f">材質<input id="mdMat" list="matList"></label>
+    <label class="f">グレード<input id="mdGrade"></label>
+    <label class="f">色<input id="mdColor"></label>
+    <label class="f">取数（1ショットの個数）<input type="number" id="mdCav" min="1"></label>
+    <label class="f">いつもの号機<input id="mdMc"></label>
+    <label class="f">サイクル（秒）<input type="number" id="mdCyc" step="0.1"></label>
+    <label class="f">マスターバッチNo.<input id="mdMb"></label>
+    <label class="f">MB g/kg<input type="number" id="mdMbg" step="0.1"></label>
+    <label class="f">乾燥温度（℃）<input type="number" id="mdDryT"></label>
+    <label class="f">乾燥時間（h以上）<input type="number" id="mdDryH" step="0.5"></label>
+  </div>
+  <label class="f" style="margin-top:10px">メモ（型替えの注意・過去トラなど）<textarea id="mdNote"></textarea></label>
+  <div class="row" style="margin-top:12px">
+    <button class="btn pri" id="mdSave" style="flex:1">保存</button>
+    <button class="btn" id="mdBc">基準条件</button>
+    <button class="btn bad" id="mdDel">削除</button>
+  </div>
+</div>
+
+<!-- 使い方 -->
+<div class="sheet" id="hpSheet">
+  <h3>使い方<span class="sp"></span><button class="ib" id="hpClose">✕</button></h3>
+  <div class="muted" style="margin-bottom:10px">ボタンを長押しすると、そのボタンの説明が出ます。</div>
+  <details class="qa"><summary>① 何を入れればいい？</summary><div>入れるのは<b>週間</b>だけです。号機と日のマスを押して「次の型・時刻・数量・担当」を入れると、<b>指示</b>（型替指示書）、<b>実績</b>（現場の記録）、<b>日報</b>（記録と印刷）に自動で反映されます。前の型と材質切替は自動で入ります。</div></details>
+  <details class="qa"><summary>② 型替指示書を紙で配りたい</summary><div><b>指示</b>タブの「印刷」を押してください。今のExcelと同じ並び（号機・型名・材質切替・清掃/型替/量産開始・担当・実績欄）でA4横に出ます。実績を入れた後に印刷すると、実績欄が埋まった状態で出ます。</div></details>
+  <details class="qa"><summary>③ 現場での記録のしかた</summary><div><b>実績</b>タブで、作業を始めたら［開始］、終わったら［終了］を押すだけです。量産開始を押すと、30分後・1時間後の製品チェックの時刻が出て、時間が来るとオレンジになります。</div></details>
+  <details class="qa"><summary>④ 担当の重なり・遅い型替えの注意</summary><div>同じ人が同じ時間に2台の型替えに入っていると（型替は「型替開始から手作業時間（標準50分）」で判定）、週間と指示に赤で出ます。設定した時刻（標準は18時）以降の型替えはオレンジで出ます。</div></details>
+  <details class="qa"><summary>⑦ 成形日報をタブレットで付けるには</summary><div><b>日報</b>タブで号機を押します。<br>・<b>巡回</b>：2時間ごとに「巡回を記録」→ OK/NG・RL・治具・監視・材料と袋の残数・印。残数は前回の値が入るので−／＋だけ。<br>・<b>打出確認</b>：12項目と付帯設備・金型水通しなどをタップ。<br>・<b>材料・型温</b>：準備した材料数とバッチ量を入れると、巡回のたびに残数の食い違いを自動で知らせます。<br>・<b>異常・終了</b>：異常はボタンで選んで記録。生産数・ASSYロット。<br>1日4回以上の巡回、RL・治具1日1回が足りないと、画面に出ます。</div></details>
+  <details class="qa"><summary>⑧ 成形開始タイムライン</summary><div><b>実績</b>タブの各型替えにある「📈 タイムライン」を押します。成形開始作業手順書の項目を順に押すと時刻が入り、予定と実績の帯、時刻の並び（何分かかったか）が出ます。【リスク】の項目は赤です。</div></details>
+  <details class="qa"><summary>⑨ 成形条件の記録</summary><div>「📝 条件記録」か、<b>日報</b>→号機→<b>条件</b>から入れます。ロット開始・条件変更のときに記録します。基準条件と公差（温度±10、金型±5）で自動判定し、公差外は赤、基準と違う所はオレンジ。条件変更は変更理由と承認者が必要です。基準条件は<b>マスタ</b>の金型から登録でき、直すと旧版は改訂履歴に残ります。</div></details>
+  <details class="qa"><summary>⑤ 型替ロスを見たい</summary><div><b>集計</b>タブで、号機別・金型別・担当別に「清掃開始〜量産開始」の実績時間と、予定からの遅れを見られます。CSVはExcelでそのまま開けます。</div></details>
+  <details class="qa"><summary>⑥ 別のタブレットでも使いたい</summary><div><b>マスタ</b>の「バックアップを書き出す」でファイルを作り、別の端末で「読み込む」を押してください。</div></details>
+</div>
+
+<!-- タイムライン -->
+<div class="sheet" id="tlSheet">
+  <h3><span id="tlTitle">成形開始タイムライン</span><span class="sp"></span><button class="ib" id="tlClose">✕</button></h3>
+  <div id="tlBody"></div>
+</div>
+<!-- 基準条件 -->
+<div class="sheet" id="bcSheet">
+  <h3><span id="bcTitle">基準条件</span><span class="sp"></span><button class="ib" id="bcClose">✕</button></h3>
+  <div class="grid2">
+    <label class="f">基準条件設定日<input type="date" id="bcDate"></label>
+    <label class="f">号機（表記）<input id="bcLabel" placeholder="例 新条件12号機A"></label>
+    <label class="f">成形機<input id="bcMc" placeholder="例 日精 NEX360V φ56"></label>
+    <label class="f">圧力の単位<select id="bcUP"><option>MPa</option><option>%</option><option>kg/cm²</option></select></label>
+    <label class="f">速度の単位<select id="bcUV"><option>mm/s</option><option>%</option></select></label>
+    <label class="f">ショート下限圧<input id="bcShort" inputmode="decimal"></label>
+    <label class="f">バリ上限圧<input id="bcFlash" inputmode="decimal"></label>
+  </div>
+  <label class="f" style="margin-top:8px">メモ<input id="bcNote"></label>
+  <div style="overflow-x:auto;margin-top:10px"><table class="cdr" id="bcRows"></table></div>
+  <div id="bcHist"></div>
+  <div class="muted" style="margin-top:6px">基準値や公差を直して保存すると、前の版は改訂履歴に残ります。</div>
+  <div class="row" style="margin-top:12px"><button class="btn pri" id="bcSave" style="flex:1;min-height:52px">保存</button></div>
+</div>
+<!-- 条件記録 -->
+<div class="sheet" id="cdSheet">
+  <h3><span id="cdTitle">条件記録</span><span class="sp"></span><button class="ib" id="cdClose">✕</button></h3>
+  <div class="moldinfo" id="cdBase"></div>
+  <div class="sec-t">種別</div><div class="chips" id="cdKinds"></div>
+  <div class="grid2" style="margin-top:8px">
+    <label class="f">時刻<input type="time" id="cdT"></label>
+    <label class="f">捨てショット数 <span id="cdShotsX"></span><input type="number" inputmode="numeric" id="cdShots"></label>
+    <label class="f">材料ロット<input id="cdLot"></label>
+  </div>
+  <div class="row" style="margin:10px 0 4px"><button class="btn sm" id="cdBaseFill">空欄に基準値を入れる</button><button class="btn sm" id="cdPrev">前回の値を入れる</button><span class="sp"></span><span class="muted" id="cdCount"></span></div>
+  <div style="overflow-x:auto"><table class="cdr" id="cdRows"></table></div>
+  <div id="cdWarn"></div>
+  <label class="f" style="margin-top:8px">変更理由<textarea id="cdReason" placeholder="条件変更のときは必ず"></textarea></label>
+  <div class="sec-t">記録者</div><div class="chips" id="cdBy"></div>
+  <div class="sec-t">承認者</div><div class="chips" id="cdAppr"></div>
+  <div class="muted" style="margin-top:6px">記録は数字でハッキリ。公差を外れた時は責任者に報告。条件変更時は責任者の承認を得る事。</div>
+  <div class="row" style="margin-top:12px"><button class="btn pri" id="cdSave" style="flex:1;min-height:56px;font-size:17px">記録する</button><button class="btn bad" id="cdDel">削除</button></div>
+</div>
+
+<datalist id="moldList"></datalist>
+<datalist id="pplList"></datalist>
+<datalist id="matList"><option>POM</option><option>PP</option><option>PE</option><option>PBT</option><option>PC/ABS</option><option>ABS</option><option>6N</option><option>66N</option><option>TPE</option><option>TPO</option></datalist>
+<div class="tip" id="tip"></div>
+<div class="toast" id="toast"></div>
+<div id="printArea"></div>
+
+<script>
+"use strict";
+const KEY="katagae-board";
+const SEED_MOLDS=[];// 金型は「shoki-data.json」を読み込んで登録
+const STEPS=[["prep","型替準備（清掃）"],["change","型替"],["uchi","打ちだし"],["mass","量産開始"],["dim","寸法"]];
+const KINDS=["通常","トライ","型替のみ","清掃のみ"];
+const DOW="日月火水木金土";
+
+/* ---------- state ---------- */
+let state;
+function defState(){
+  const molds={};
+  SEED_MOLDS.forEach(m=>{molds[m.code]={code:m.code,name:"",mat:m.mat||"",grade:"",color:"",cav:"",mc:m.mc||"",cyc:"",mb:"",mbg:"",dryT:"",dryH:"",note:""};});
+  return{v:1,
+    machines:["1","2","3","5","6","7","8","9","10","11","12","13"].map(n=>({no:n,cur:""})),
+    people:[],
+    molds,changes:[],nippo:{},conds:[],
+    set:{prep:10,chg:60,hand:50,nippo:"10:00",late:18},
+    ui:{tab:"week",date:ymd(new Date()),furi:false,me:""}};
+}
+function load(){
+  let s=null;try{s=JSON.parse(localStorage.getItem(KEY)||"null");}catch(e){}
+  state=applyLoaded(s);seedConds(state);
+}
+function applyLoaded(s){
+  const d=defState();
+  if(!s||typeof s!=="object")return d;
+  s.machines=Array.isArray(s.machines)&&s.machines.length?s.machines:d.machines;
+  s.people=Array.isArray(s.people)?s.people:d.people;
+  s.molds=s.molds&&typeof s.molds==="object"?s.molds:d.molds;
+  s.changes=Array.isArray(s.changes)?s.changes:[];
+  s.nippo=s.nippo&&typeof s.nippo==="object"?s.nippo:{};
+  s.conds=Array.isArray(s.conds)?s.conds:[];
+  Object.values(s.nippo).forEach(r=>{["uchi","equip","water","setT","hose","misc","prep"].forEach(k=>r[k]=r[k]||{});r.temp=r.temp||{a:{},b:{}};r.temp.a=r.temp.a||{};r.temp.b=r.temp.b||{};r.patrols=r.patrols||[];r.abn=r.abn||[];r.assy=r.assy||[{},{}];});
+  s.set=Object.assign({},d.set,s.set||{});
+  s.ui=Object.assign({},d.ui,s.ui||{});
+  s.changes.forEach(c=>{c.staff=c.staff||{};c.act=c.act||{};c.chk=c.chk||{};c.kind=c.kind||"通常";c.tl=c.tl||{};c.chkT=c.chkT||{};});
+  return s;
+}
+let saveT;function save(){clearTimeout(saveT);saveT=setTimeout(()=>{try{localStorage.setItem(KEY,JSON.stringify(state));}catch(e){toast("保存できませんでした（ブラウザの保存領域）");}},150);}
+
+/* ---------- utils ---------- */
+function ymd(d){return d.getFullYear()+"-"+String(d.getMonth()+1).padStart(2,"0")+"-"+String(d.getDate()).padStart(2,"0");}
+function pd(s){const[a,b,c]=s.split("-").map(Number);return new Date(a,b-1,c);}
+function addDays(s,n){const d=pd(s);d.setDate(d.getDate()+n);return ymd(d);}
+function md(s){const d=pd(s);return (d.getMonth()+1)+"/"+d.getDate()+"（"+DOW[d.getDay()]+"）";}
+function monday(s){const d=pd(s);const w=(d.getDay()+6)%7;d.setDate(d.getDate()-w);return ymd(d);}
+function tm(s){if(!s)return null;const m=/^(\d{1,2}):(\d{2})/.exec(s);return m?(+m[1])*60+(+m[2]):null;}
+function hm(n){if(n==null||isNaN(n))return"";n=((Math.round(n)%1440)+1440)%1440;return String(Math.floor(n/60)).padStart(2,"0")+":"+String(n%60).padStart(2,"0");}
+function nowHM(){const d=new Date();return hm(d.getHours()*60+d.getMinutes());}
+function esc(s){return String(s??"").replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));}
+function $(s){return document.querySelector(s);}
+function uid(){return Date.now().toString(36)+Math.random().toString(36).slice(2,6);}
+function toast(t){const e=$("#toast");e.textContent=t;e.classList.add("on");clearTimeout(e._t);e._t=setTimeout(()=>e.classList.remove("on"),1800);}
+function mcSort(a,b){return (parseFloat(a)||999)-(parseFloat(b)||999)||String(a).localeCompare(String(b));}
+function key(c){return c.date+" "+(c.tChange||c.tPrep||"99:99");}
+function dur(a,b){const x=tm(a),y=tm(b);if(x==null||y==null)return null;let d=y-x;if(d<-600)d+=1440;return d;}
+function fmtMin(n){if(n==null||isNaN(n))return"—";const s=n<0?"-":"";n=Math.abs(Math.round(n));return s+(n>=60?Math.floor(n/60)+"時間"+(n%60?n%60+"分":""):n+"分");}
+
+/* ---------- model ---------- */
+function mold(code){return code?state.molds[code]||null:null;}
+function chOf(date){return state.changes.filter(c=>c.date===date).sort((a,b)=>key(a)<key(b)?-1:1);}
+function chMc(mc){return state.changes.filter(c=>c.mc===mc).sort((a,b)=>key(a)<key(b)?-1:1);}
+function prevMold(c){
+  const list=chMc(c.mc).filter(x=>x.id!==c.id&&key(x)<key(c));
+  if(list.length){const p=list[list.length-1];return p.kind==="清掃のみ"?(p.from||""):(p.to||"");}
+  const m=state.machines.find(x=>x.no===c.mc);return m?m.cur:"";
+}
+function fromOf(c){return c.fromManual?c.from:prevMold(c);}
+function runningAt(mc,date){ // mold on machine at start of date
+  const list=chMc(mc).filter(x=>x.date<date);
+  if(list.length){const p=list[list.length-1];return p.kind==="清掃のみ"?fromOf(p):p.to;}
+  const m=state.machines.find(x=>x.no===mc);return m?m.cur:"";
+}
+function matOf(code){const m=mold(code);return m?m.mat:"";}
+function moldHours(c){const m=mold(c.to);if(!m||!c.qty||!m.cyc)return null;const cav=+m.cav||1;return c.qty/cav*m.cyc/3600;}
+function status(c){
+  const a=c.act||{};
+  if(a.dim&&a.dim.e||c.done)return"done";
+  if(STEPS.some(([k])=>a[k]&&(a[k].s||a[k].e)))return"run";
+  return"wait";
+}
+function warnings(date){
+  const out=[];const list=chOf(date);
+  const late=state.set.late;
+  list.forEach(c=>{
+    const t=tm(c.tChange);if(t!=null&&t>=late*60)out.push({lv:"warn",c,t:`${c.mc}号機 ${c.to}：型替開始 ${c.tChange}（${late}時以降）`});
+    const fm=matOf(fromOf(c)),tm2=matOf(c.to);
+    if(fm&&tm2&&fm!==tm2&&c.kind!=="清掃のみ")out.push({lv:"info",c,t:`${c.mc}号機：材質切替 ${fm}→${tm2}（パージ手順書に基づきパージ）`});
+  });
+  // person overlap: prep window [t1,t2), change window [t2,t3)
+  const wins=[];
+  list.forEach(c=>{
+    const t1=tm(c.tPrep),t2=tm(c.tChange),t3=tm(c.tMass);
+    if(c.staff.prep&&t1!=null&&t2!=null&&t2>t1)wins.push({p:c.staff.prep,a:t1,b:t2,c,w:"清掃"});
+    if(t2!=null){const e2=Math.min(t3!=null&&t3>t2?t3:9999,t2+(+state.set.hand||50));[c.staff.change,c.staff.sub].forEach(p=>{if(p)wins.push({p,a:t2,b:e2,c,w:"型替"});});}
+  });
+  const seen=new Set();
+  for(let i=0;i<wins.length;i++)for(let j=i+1;j<wins.length;j++){
+    const x=wins[i],y=wins[j];
+    if(x.p===y.p&&x.c.id!==y.c.id&&x.a<y.b&&y.a<x.b){
+      const k=x.p+x.c.id+y.c.id;if(seen.has(k))continue;seen.add(k);
+      out.push({lv:"bad",c:x.c,ids:[x.c.id,y.c.id],t:`${x.p}さんが重なっています：${x.c.mc}号機${x.w}（${hm(x.a)}〜${hm(x.b)}）と ${y.c.mc}号機${y.w}（${hm(y.a)}〜${hm(y.b)}）`});
+    }
+  }
+  return out;
+}
+function warnHTML(ws){
+  if(!ws.length)return"";
+  return ws.map(w=>`<div class="warnbox ${w.lv==="bad"?"bad":""}" ${w.lv==="info"?'style="background:var(--run-soft);color:var(--run)"':""}>${w.lv==="bad"?"⚠ ":w.lv==="warn"?"🌙 ":"🔁 "}${esc(w.t)}</div>`).join("");
+}
+
+/* ---------- tabs ---------- */
+function showTab(t){
+  state.ui.tab=t;save();
+  document.querySelectorAll("[data-tabs]").forEach(e=>e.classList.toggle("tab-off",!e.dataset.tabs.split(" ").includes(t)));
+  document.querySelectorAll("#tabs button").forEach(b=>b.classList.toggle("on",b.dataset.t===t));
+  render();window.scrollTo(0,0);
+}
+function render(){
+  $("#dPick").value=state.ui.date;
+  const t=state.ui.tab;
+  if(t==="week")renderWeek();
+  if(t==="shiji")renderShiji();
+  if(t==="act")renderAct();
+  if(t==="nippo")renderNippo();
+  if(t==="stat")renderStat();
+  if(t==="master")renderMaster();
+}
+
+/* ---------- 週間 ---------- */
+function renderWeek(){
+  $("#firstRun").innerHTML=Object.keys(state.molds).length?"":`<div class="warnbox">はじめに：マスタ →「⬆ バックアップを読み込む」で <b>shoki-data.json</b>（初期データ）を入れてください（金型・担当者・基準条件が入ります）。</div>`;
+  const mon=monday(state.ui.date);const days=[0,1,2,3,4,5].map(i=>addDays(mon,i));
+  $("#wkLabel").textContent=md(days[0])+" 〜 "+md(days[5]);
+  const today=ymd(new Date());
+  let h="<thead><tr><th class='mc'>号機</th>"+days.map(d=>`<th class="${d===today?"today":""}" data-day="${d}">${md(d)}</th>`).join("")+"</tr></thead><tbody>";
+  const mcs=state.machines.map(m=>m.no).sort(mcSort);
+  mcs.forEach(mc=>{
+    h+=`<tr><th class="mc">${esc(mc)}</th>`;
+    days.forEach(d=>{
+      const run=runningAt(mc,d);
+      const cs=state.changes.filter(c=>c.mc===mc&&c.date===d).sort((a,b)=>key(a)<key(b)?-1:1);
+      h+=`<td data-mc="${esc(mc)}" data-d="${d}">`;
+      if(run)h+=`<div class="run">▶ ${esc(run)}</div>`;
+      cs.forEach(c=>{
+        const st=status(c);const late=tm(c.tChange)!=null&&tm(c.tChange)>=state.set.late*60;
+        h+=`<button class="chip ${st==="done"?"done":late?"late":""}" data-id="${c.id}"><b>${esc(c.tChange||c.tPrep||"--:--")} →${esc(c.to||"?")}</b>${c.kind!=="通常"?" <span class='q'>["+esc(c.kind)+"]</span>":""}${c.qty?"<br><span class='q'>"+Number(c.qty).toLocaleString()+"</span>":""}</button>`;
+      });
+      if(!run&&!cs.length)h+=`<div class="plus">＋</div>`;
+      h+="</td>";
+    });
+    h+="</tr>";
+  });
+  $("#wkTbl").innerHTML=h+"</tbody>";
+  let ws=[];days.forEach(d=>warnings(d).filter(w=>w.lv==="bad"||w.lv==="warn").forEach(w=>ws.push({lv:w.lv,t:md(d)+" "+w.t})));
+  $("#wkWarn").innerHTML=warnHTML(ws);
+}
+$("#wkTbl").addEventListener("click",e=>{
+  if(longFired)return;
+  const chip=e.target.closest(".chip");if(chip){openEd(chip.dataset.id);return;}
+  const th=e.target.closest("th[data-day]");if(th){state.ui.date=th.dataset.day;showTab("shiji");return;}
+  const td=e.target.closest("td[data-mc]");if(td)openEd(null,{mc:td.dataset.mc,date:td.dataset.d});
+});
+$("#wkPrev").onclick=()=>{state.ui.date=addDays(state.ui.date,-7);save();render();};
+$("#wkNext").onclick=()=>{state.ui.date=addDays(state.ui.date,7);save();render();};
+
+/* ---------- editor ---------- */
+let edId=null,edKind="通常",edFromManual=false;
+function fillMoldList(){$("#moldList").innerHTML=Object.keys(state.molds).sort().map(k=>`<option value="${esc(k)}">${esc(state.molds[k].mat||"")}${state.molds[k].mc?" / "+esc(state.molds[k].mc)+"号機":""}</option>`).join("");}
+function openSheet(id){$("#sheetBg").classList.add("on");$(id).classList.add("on");}
+function closeSheets(){document.querySelectorAll(".sheet,.sheet-bg").forEach(e=>e.classList.remove("on"));}
+$("#sheetBg").onclick=closeSheets;
+function openEd(id,preset){
+  fillMoldList();
+  const c=id?state.changes.find(x=>x.id===id):null;edId=c?c.id:null;
+  const p=preset||{};
+  $("#edTitle").textContent=c?"型替えを修正":"型替えを追加";
+  $("#edDel").style.display=c?"":"none";
+  $("#edMc").innerHTML=state.machines.map(m=>m.no).sort(mcSort).map(n=>`<option>${esc(n)}</option>`).join("");
+  $("#edDate").value=c?c.date:(p.date||state.ui.date);
+  $("#edMc").value=c?c.mc:(p.mc||state.machines[0].no);
+  $("#edQty").value=c?c.qty||"":"";
+  edKind=c?c.kind:"通常";
+  edFromManual=c?!!c.fromManual:false;
+  $("#edFrom").value=c?fromOf(c):"";
+  $("#edTo").value=c?c.to||"":"";
+  // default times: after last change on that machine that day, else 8:00
+  let t1=c?c.tPrep:"",t2=c?c.tChange:"",t3=c?c.tMass:"";
+  if(!c){
+    const same=state.changes.filter(x=>x.date===$("#edDate").value&&x.mc===$("#edMc").value);
+    const base=same.length?Math.max(...same.map(x=>tm(x.tMass)||480))+60:480;
+    t1=hm(base);t2=hm(base+ +state.set.prep);t3=hm(base+ +state.set.prep+ +state.set.chg);
+  }
+  $("#edT1").value=t1;$("#edT2").value=t2;$("#edT3").value=t3;
+  const st=c?c.staff:{};
+  const opts=v=>"<option value=''>—</option>"+state.people.map(p=>`<option ${p===v?"selected":""}>${esc(p)}</option>`).join("");
+  $("#edStaff").innerHTML=
+    `<tr><td>型替準備（清掃）</td><td><select data-k="prep">${opts(st.prep)}</select></td><td></td></tr>`+
+    `<tr><td>型替</td><td><select data-k="change">${opts(st.change)}</select></td><td><select data-k="sub" title="サブ">${opts(st.sub).replace("—","サブ —")}</select></td></tr>`+
+    `<tr><td>打ちだし</td><td><select data-k="uchi">${opts(st.uchi)}</select></td><td rowspan="3" style="vertical-align:middle"><button class="btn sm" id="edSame">↑ 打ちだしと同じに</button></td></tr>`+
+    `<tr><td>量産開始</td><td><select data-k="mass">${opts(st.mass)}</select></td></tr>`+
+    `<tr><td>寸法</td><td><select data-k="dim">${opts(st.dim)}</select></td></tr>`;
+  $("#edSame").onclick=()=>{const v=$("#edStaff [data-k=uchi]").value;["mass","dim"].forEach(k=>$(`#edStaff [data-k=${k}]`).value=v);edCheck();};
+  $("#edStaff").onchange=edCheck;
+  renderKind();updFrom();edInfo();edCheck();
+  openSheet("#edSheet");
+}
+function renderKind(){$("#edKind").innerHTML=KINDS.map(k=>`<button class="${k===edKind?"on":""}" data-k="${k}">${k}</button>`).join("");}
+$("#edKind").onclick=e=>{const b=e.target.closest("button");if(!b)return;edKind=b.dataset.k;renderKind();edInfo();};
+function edTmp(){
+  const staff={};document.querySelectorAll("#edStaff select").forEach(s=>staff[s.dataset.k]=s.value);
+  return{id:edId||"__tmp",date:$("#edDate").value,mc:$("#edMc").value,kind:edKind,to:$("#edTo").value.trim(),from:$("#edFrom").value.trim(),fromManual:edFromManual,tPrep:$("#edT1").value,tChange:$("#edT2").value,tMass:$("#edT3").value,qty:+$("#edQty").value||"",staff};
+}
+function updFrom(){if(!edFromManual){const t=edTmp();t.fromManual=false;$("#edFrom").value=prevMold(t);}}
+["#edDate","#edMc","#edT2"].forEach(s=>$(s).addEventListener("change",()=>{updFrom();edInfo();edCheck();}));
+$("#edFrom").addEventListener("input",()=>{edFromManual=true;edInfo();});
+$("#edTo").addEventListener("input",()=>{edInfo();});
+$("#edTo").addEventListener("change",()=>{const m=mold($("#edTo").value.trim());if(m&&m.mc&&!edId&&m.mc!==$("#edMc").value)toast(`${m.code} はいつも ${m.mc}号機です`);edInfo();});
+$("#edQty").addEventListener("input",edInfo);
+$("#edT1").addEventListener("change",()=>{const a=tm($("#edT1").value);if(a!=null){$("#edT2").value=hm(a+ +state.set.prep);$("#edT3").value=hm(a+ +state.set.prep+ +state.set.chg);}edCheck();});
+$("#edT3").addEventListener("change",edCheck);
+function edInfo(){
+  const t=edTmp();const fm=mold(t.from),to=mold(t.to);
+  let h="";
+  const fmat=fm?fm.mat:"",tmat=to?to.mat:"";
+  h+=`<b>${esc(t.from||"（前型なし）")}</b> ${fmat?"["+esc(fmat)+"]":""} → <b>${esc(t.to||"？")}</b> ${tmat?"["+esc(tmat)+"]":""}`;
+  if(fmat&&tmat&&fmat!==tmat)h+=` <span class="badge warn">材質切替：パージ要</span>`;
+  if(to){
+    const bits=[];if(to.name)bits.push(to.name);if(to.cav)bits.push("取数 "+to.cav);if(to.cyc)bits.push("サイクル "+to.cyc+"秒");if(to.mc)bits.push("いつも "+to.mc+"号機");
+    if(bits.length)h+="<br>"+esc(bits.join("　"));
+    const hrs=moldHours(t);if(hrs!=null){const end=tm(t.tMass)!=null?hm(tm(t.tMass)+hrs*60):"";h+=`<br>成形時間 約${hrs.toFixed(1)}時間${end?"（"+end+"ごろ終了"+(tm(t.tMass)+hrs*60>=1440?"・翌日以降":"")+"）":""}`;}
+    if(to.note)h+=`<br>📝 ${esc(to.note)}`;
+  }else if(t.to)h+=`<br><span class="muted">マスタにない型です（保存すると自動で登録します）</span>`;
+  $("#edInfo").innerHTML=h;
+}
+function edCheck(){
+  const t=edTmp();
+  const backup=state.changes;const tmp=Object.assign({},t,{id:edId||"__tmp",act:{},chk:{}});
+  state.changes=backup.filter(x=>x.id!==edId).concat([tmp]);
+  const ws=warnings(t.date).filter(w=>w.c.id===tmp.id||(w.ids&&w.ids.includes(tmp.id)));
+  state.changes=backup;
+  $("#edWarn").innerHTML=warnHTML(ws.filter(w=>w.lv!=="info"));
+}
+$("#edClose").onclick=closeSheets;
+$("#edSave").onclick=()=>{
+  const t=edTmp();
+  if(!t.to&&t.kind!=="清掃のみ"){toast("次の型を入れてください");$("#edTo").focus();return;}
+  if(t.to&&!state.molds[t.to])state.molds[t.to]={code:t.to,name:"",mat:"",grade:"",color:"",cav:"",mc:t.mc,cyc:"",mb:"",mbg:"",dryT:"",dryH:"",note:""};
+  let c=edId?state.changes.find(x=>x.id===edId):null;
+  if(!c){c={id:uid(),act:{},chk:{},count:"",note:""};state.changes.push(c);}
+  Object.assign(c,t,{id:c.id});
+  if(!c.fromManual)c.from="";
+  save();closeSheets();render();toast("保存しました");
+};
+$("#edDel").onclick=()=>{
+  const b=$("#edDel");
+  if(!b.dataset.arm){b.dataset.arm="1";b.textContent="もう一度押すと削除";setTimeout(()=>{b.dataset.arm="";b.textContent="削除";},2500);return;}
+  state.changes=state.changes.filter(x=>x.id!==edId);b.dataset.arm="";b.textContent="削除";save();closeSheets();render();toast("削除しました");
+};
+
+/* ---------- 指示 ---------- */
+function actStr(c,k){const a=(c.act||{})[k];if(!a||(!a.s&&!a.e))return"　：　　～　　：";return(a.s||"　：　")+" ～ "+(a.e||"　：　");}
+function shijiRows(date,forPrint){
+  const list=chOf(date);let h="";
+  list.forEach(c=>{
+    const fm=fromOf(c);const fmat=matOf(fm),tmat=matOf(c.to);const hrs=moldHours(c);
+    STEPS.forEach(([k,n],i)=>{
+      h+="<tr>";
+      if(i===0){
+        h+=`<td rowspan="5" class="${forPrint?"mc":"big"}">${esc(c.mc)}</td>`;
+        h+=`<td rowspan="5" class="mold">${esc(fm||"")}<br>↓<br>${esc(c.to||"")}${c.kind!=="通常"?"<br>["+esc(c.kind)+"]":""}</td>`;
+        h+=`<td rowspan="5">${esc(fmat||"")}<br>↓<br>${esc(tmat||"")}</td>`;
+        h+=`<td rowspan="5">${esc(c.tPrep||"")}</td><td rowspan="5">${esc(c.tChange||"")}</td><td rowspan="5">${esc(c.tMass||"")}</td>`;
+        h+=`<td rowspan="5">${hrs!=null?hrs.toFixed(1)+"h":""}</td><td rowspan="5">${c.qty?Number(c.qty).toLocaleString():""}</td>`;
+      }
+      h+=`<td class="l">${n}</td><td>${esc(c.staff[k]||"")}</td><td>${k==="change"?esc(c.staff.sub||""):""}</td><td>${actStr(c,k)}</td>`;
+      if(i===0)h+=`<td rowspan="5">${esc(c.count||"")}</td><td rowspan="5" class="l" style="min-width:120px">${esc(c.note||"")}</td>`;
+      h+="</tr>";
+    });
+  });
+  return h;
+}
+const SJ_HEAD=`<thead><tr><th rowspan="2">号機</th><th rowspan="2">型名</th><th rowspan="2">材質切替</th><th colspan="3">予定開始時刻</th><th colspan="2">成形予定</th><th colspan="3">担当</th><th rowspan="2">実績（開始～終了）</th><th rowspan="2">成形数</th><th rowspan="2">作業報告（トラブル等）</th></tr>
+<tr><th>清掃開始</th><th>型替開始</th><th>量産開始</th><th>成形時間</th><th>成形数</th><th>工程</th><th>メイン</th><th>サブ</th></tr></thead>`;
+function renderShiji(){
+  const d=state.ui.date;$("#sjDate").textContent=md(d)+"　"+chOf(d).length+"件";
+  $("#sjWarn").innerHTML=warnHTML(warnings(d));
+  const rows=shijiRows(d,false);
+  $("#sjTbl").innerHTML=SJ_HEAD+"<tbody>"+(rows||`<tr><td colspan="14" style="padding:24px">この日の型替えはありません。「＋ 型替えを追加」か、週間タブのマスを押してください。</td></tr>`)+"</tbody>";
+}
+$("#sjTbl").addEventListener("click",e=>{const td=e.target.closest("tr");if(!td)return;const idx=[...$("#sjTbl tbody").rows].indexOf(td);if(idx<0)return;const c=chOf(state.ui.date)[Math.floor(idx/5)];if(c)openEd(c.id);});
+$("#sjAdd").onclick=()=>openEd(null,{date:state.ui.date});
+$("#sjPrint").onclick=()=>{
+  const d=state.ui.date;const list=chOf(d);
+  if(!list.length){toast("この日の型替えがありません");return;}
+  // 1ページ最大6件（Excelの原紙は5行×最大11件だがA4横に収める）
+  let h="";for(let i=0;i<list.length;i+=6){
+    const ids=new Set(list.slice(i,i+6).map(c=>c.id));
+    const backup=state.changes;state.changes=backup.filter(c=>c.date!==d||ids.has(c.id));
+    h+=`<div class="pp p-sj"><style>@page{size:A4 landscape;margin:8mm}</style><h1>【型替指示＆実績確認】<span>${md(d)}</span><span style="font-size:11px;font-weight:400">${i/6+1}/${Math.ceil(list.length/6)}</span></h1><div class="def">①型替準備・・・ローダー清掃、ホッパー清掃　②型替・・・金型のせ替え、量産環境準備、清掃　③打ちだし・・・打ちだし、量産開始、製品チェック（３０分後、１時間後）</div><table>${SJ_HEAD}<tbody>${shijiRows(d,true)}</tbody></table></div>`;
+    state.changes=backup;
+  }
+  doPrint(h);
+};
+function doPrint(h){$("#printArea").innerHTML=h;setTimeout(()=>window.print(),50);}
+
+/* ---------- 実績 ---------- */
+function renderAct(){
+  const d=state.ui.date;const list=chOf(d);$("#actDate").textContent=md(d)+"　"+list.length+"件";
+  if(!list.length){$("#acts").innerHTML=`<div class="muted">この日の型替えはありません。</div>`;return;}
+  const now=tm(nowHM());const isToday=d===ymd(new Date());
+  $("#acts").innerHTML=list.map(c=>{
+    const st=status(c);const a=c.act;const fm=fromOf(c);
+    const fmat=matOf(fm),tmat=matOf(c.to);
+    let h=`<div class="act st-${st}" data-id="${c.id}"><div class="act-h"><span class="mcno">${esc(c.mc)}</span><span class="mm">${esc(fm||"—")} → ${esc(c.to||"")}</span><span class="sp"></span><span class="badge ${st}">${st==="done"?"完了":st==="run"?"作業中":"未着手"}</span></div>`;
+    h+=`<div class="muted">予定 清掃${esc(c.tPrep||"--")} / 型替${esc(c.tChange||"--")} / 量産${esc(c.tMass||"--")}${fmat&&tmat&&fmat!==tmat?`　<span class="badge warn">${esc(fmat)}→${esc(tmat)} パージ</span>`:""}${c.kind!=="通常"?`　<span class="badge">${esc(c.kind)}</span>`:""}</div>`;
+    STEPS.forEach(([k,n])=>{
+      const x=a[k]||{};
+      const who=k==="change"?[c.staff.change,c.staff.sub].filter(Boolean).join("・"):c.staff[k]||"";
+      h+=`<div class="step"><div><div class="nm">${n}</div><div class="who">${esc(who||"担当未定")}</div></div><div class="who">${x.s&&x.e?fmtMin(dur(x.s,x.e)):""}</div><div class="tbtns">
+        <button class="tb ${x.s?"set":""}" data-k="${k}" data-w="s">${x.s?esc(x.s)+"<small>開始</small>":"開始"}</button>
+        <button class="tb ${x.e?"set e":""}" data-k="${k}" data-w="e">${x.e?esc(x.e)+"<small>終了</small>":"終了"}</button></div></div>`;
+    });
+    const tp=tlProgress(c);const nc=state.conds.filter(r=>r.chId===c.id||(r.date===c.date&&r.mc===c.mc&&r.code===c.to));const ncOut=nc.some(r=>recIssues(r).out);
+    h+=`<div class="row" style="margin-top:8px"><button class="btn sm" data-tlo="1">📈 タイムライン・手順 ${tp.done}/${tp.n}</button><button class="btn sm ${ncOut?"bad":""}" data-cdo="1">📝 条件記録 ${nc.length?nc.length+"件":"まだ"}</button></div>`;
+    const ms=a.mass&&a.mass.s?tm(a.mass.s):null;
+    const due=(n)=>ms!=null&&isToday&&now>=ms+n;
+    h+=`<div class="checks">
+      <button class="ck ${c.chk.box?"on":""}" data-c="box">${c.chk.box?"✓ ":""}量産受け箱に残留品なし</button>
+      <button class="ck ${c.chk.c30?"on":due(30)?"due":""}" data-c="c30">${c.chk.c30?"✓ ":""}30分後チェック${ms!=null?"（"+hm(ms+30)+"）":""}</button>
+      <button class="ck ${c.chk.c60?"on":due(60)?"due":""}" data-c="c60">${c.chk.c60?"✓ ":""}1時間後チェック${ms!=null?"（"+hm(ms+60)+"）":""}</button></div>`;
+    const tot=a.prep&&a.prep.s&&a.mass&&a.mass.s?dur(a.prep.s,a.mass.s):null;
+    const plan=dur(c.tPrep,c.tMass);
+    if(tot!=null)h+=`<div class="${plan!=null&&tot>plan+10?"warnbox":"okbox"}">型替ロス ${fmtMin(tot)}（予定 ${fmtMin(plan)}${plan!=null?"、差 "+(tot-plan>=0?"+":"")+fmtMin(tot-plan):""}）</div>`;
+    h+=`<div class="grid2" style="margin-top:8px"><label class="f">成形数<input type="number" inputmode="numeric" data-f="count" value="${esc(c.count||"")}"></label></div>
+      <label class="f" style="margin-top:6px">作業報告（トラブル等）<textarea data-f="note">${esc(c.note||"")}</textarea></label></div>`;
+    return h;
+  }).join("");
+}
+$("#acts").addEventListener("click",e=>{
+  if(longFired)return;
+  const card=e.target.closest(".act");if(!card)return;const c=state.changes.find(x=>x.id===card.dataset.id);if(!c)return;
+  if(e.target.closest("[data-tlo]")){openTl(c.id);return;}
+  if(e.target.closest("[data-cdo]")){openCd({date:c.date,mc:c.mc,code:c.to,chId:c.id});return;}
+  const tb=e.target.closest(".tb");
+  if(tb){
+    const k=tb.dataset.k,w=tb.dataset.w;c.act[k]=c.act[k]||{};
+    if(c.act[k][w]){editTime(tb,c,k,w);return;}
+    c.act[k][w]=nowHM();
+    // 前の工程の終了が空なら、この開始で自動的に閉じる
+    if(w==="s"){const i=STEPS.findIndex(s=>s[0]===k);if(i>0){const pk=STEPS[i-1][0];if(c.act[pk]&&c.act[pk].s&&!c.act[pk].e)c.act[pk].e=c.act[k].s;}}
+    save();renderAct();return;
+  }
+  const ck=e.target.closest(".ck");if(ck){const k=ck.dataset.c;c.chk[k]=!c.chk[k];c.chkT=c.chkT||{};if(c.chk[k])c.chkT[k]=nowHM();else delete c.chkT[k];if(k==="box"){c.tl=c.tl||{};if(c.chk[k])c.tl.p3a={t:c.chkT[k],by:state.ui.me||""};else delete c.tl.p3a;}save();renderAct();}
+});
+$("#acts").addEventListener("change",e=>{const f=e.target.dataset.f;if(!f)return;const card=e.target.closest(".act");const c=state.changes.find(x=>x.id===card.dataset.id);c[f]=e.target.value;save();});
+function editTime(btn,c,k,w){
+  const inp=document.createElement("input");inp.type="time";inp.value=c.act[k][w];
+  inp.style.cssText="min-width:74px;min-height:46px;border-radius:10px;border:2px solid var(--accent);font-size:15px;background:var(--surface)";
+  btn.replaceWith(inp);inp.focus();
+  const done=()=>{if(inp.value)c.act[k][w]=inp.value;else delete c.act[k][w];save();renderAct();};
+  inp.addEventListener("change",done);inp.addEventListener("blur",done);
+}
+
+/* ---------- 日報 ---------- */
+// ふりがな：{漢字|かな}
+function rb(s){return state.ui.furi?s.replace(/\{([^|}]+)\|([^}]+)\}/g,"<ruby>$1<rt>$2</rt></ruby>"):s.replace(/\{([^|}]+)\|[^}]+\}/g,"$1");}
+function rbPlain(s){return s.replace(/\{([^|}]+)\|[^}]+\}/g,"$1");}
+const UCHI=[ // 打出確認チェック項目（原紙251023版）
+  {t:"{条件表|じょうけんひょう}が{整番|せいばん}・{号機|ごうき}・{条件|じょうけん}に{間違|まちが}いが{無|な}いか{確認|かくにん}"},
+  {t:"リミットスイッチ{調整|ちょうせい}を{確認|かくにん}"},
+  {t:"ローダーから{材料|ざいりょう}の{送|おく}り{確認|かくにん}"},
+  {t:"{成形機|せいけいき}{下|した}シューター{使用|しよう}{製品|せいひん}は、シューター・ホースに{引|ひ}っ{掛|か}かっている{物|もの}が{無|な}いか、ショット{数|すう}と{数|かず}が{一致|いっち}しているか{確認|かくにん}",na:1},
+  {t:"{製品|せいひん}{充填|じゅうてん}{後|ご}にショート・キャビ{破損|はそん}の{確認|かくにん}"},
+  {t:"モニター{異常|いじょう}1{回|かい}{停止|ていし}{確認|かくにん}"},
+  {t:"R/L{確認|かくにん}{後|ご}、{混入|こんにゅう}・{割|わ}れの{対策|たいさく}は{取|と}られているか{確認|かくにん}"},
+  {t:"{粒断機|りゅうだんき}{使用|しよう}の{場合|ばあい}、{回転数|かいてんすう}{確認|かくにん}",na:1},
+  {t:"{粒断機|りゅうだんき}{使用|しよう}の{場合|ばあい}、{新材|しんざい}{供給|きょうきゅう}{確認|かくにん}（シャッター{開|かい}・スイッチON{確認|かくにん}）",na:1},
+  {t:"エアロパワーホッパー{使用|しよう}の{場合|ばあい}、A＋B{材|ざい}{使用|しよう}になっているか{確認|かくにん}",na:1},
+  {t:"ファイル{記入|きにゅう}を{行|おこな}い{条件|じょうけん}の{再確認|さいかくにん}"},
+  {t:"{成形機|せいけいき}の{上|うえ}・{周辺|しゅうへん}の{清掃|せいそう}を{確認|かくにん}"},
+];
+const EQUIP=[["tori","{取出機|とりだしき}"],["gate","ゲートカット"],["conv","コンベアー"],["shoot","シューター"],["mold","{金型|かながた}"]];
+const PTCHK=[["rl","RL{確認|かくにん}"],["jig","{検査治具|けんさじぐ}{確認|かくにん}"],["watch","{監視|かんし}"]];
+const AB_KINDS=["ショート","バリ","ヒケ","ウエルド","シルバー","黒点・異物","変形・反り","キズ","寸法NG","チョコ停","取出ミス","材料切れ","その他"];
+const AB_ACTS=["止めて責任者に連絡","条件調整","金型清掃","材料補充","不良品を隔離","選別","様子見（監視強化）"];
+let npView=null,npSeg="pt",npSel=new Set(),npDateFor="";
+function npKey(d,mc,code){return d+"|"+mc+"|"+code;}
+function dayItems(d){
+  const items=[];
+  state.machines.map(m=>m.no).sort(mcSort).forEach(mc=>{
+    const run=runningAt(mc,d);const cs=state.changes.filter(c=>c.mc===mc&&c.date===d).sort((a,b)=>key(a)<key(b)?-1:1);
+    if(run&&!(cs.length&&cs[0].tChange&&tm(cs[0].tChange)<=8*60+30))items.push({mc,code:run,qty:"",start:"",ch:null});
+    cs.forEach(c=>{if(c.kind!=="清掃のみ"&&c.to)items.push({mc,code:c.to,qty:c.qty,start:c.tMass,ch:c});});
+  });
+  // 記録だけあるもの（予定にない）も出す
+  Object.values(state.nippo).filter(r=>r.date===d&&!items.some(x=>x.mc===r.mc&&x.code===r.code)).forEach(r=>items.push({mc:r.mc,code:r.code,qty:"",start:"",ch:null}));
+  return items.sort((a,b)=>mcSort(a.mc,b.mc));
+}
+function getRec(d,x,create){
+  const k=npKey(d,x.mc,x.code);let r=state.nippo[k];
+  if(!r&&create){
+    const m=mold(x.code)||{};const c=x.ch;
+    r=state.nippo[k]={date:d,mc:x.mc,code:x.code,uchi:{},equip:{},water:{},setT:{},hose:{},misc:{},
+      kataPeople:c?[c.staff.change,c.staff.sub].filter(Boolean).join("・"):"",uchiBy:c?c.staff.uchi||"":"",endBy:"",
+      patrols:[],prep:{},temp:{a:{},b:{}},abn:[],assy:[{},{}],produced:"",dryT:m.dryT||"",dryStart:"",note:""};
+    save();
+  }
+  return r||null;
+}
+function slotStart(){return tm(state.set.nippo)??600;}
+function slotIdx(t){const st=slotStart();let x=tm(t);if(x==null)return-1;if(x<st-60)x+=1440;return Math.max(0,Math.min(11,Math.round((x-st)/120)));}
+function bagRatio(r){const a=+r.prep.mat,b=+r.prep.bag;return a>0&&b>0?b/a:null;}
+function bagMismatch(r,p){const k=bagRatio(r);if(k==null||p.mat===""||p.mat==null||p.bag===""||p.bag==null)return null;const exp=(+p.mat)*k;return Math.abs((+p.bag)-exp)>=1?exp:null;}
+function recSummary(r,d){
+  const s={uchi:0,uchiN:UCHI.length,pt:0,ng:0,abn:0,mis:0,last:"",due:null,rl:false,jig:false};
+  if(!r)return s;
+  UCHI.forEach((_,i)=>{if(r.uchi[i])s.uchi++;});
+  s.pt=r.patrols.length;s.ng=r.patrols.filter(p=>p.judge==="NG").length;s.abn=r.abn.length;
+  s.mis=r.patrols.filter(p=>bagMismatch(r,p)!=null).length;
+  s.rl=r.patrols.some(p=>p.rl);s.jig=r.patrols.some(p=>p.jig);
+  const ts=r.patrols.map(p=>p.t).filter(Boolean).sort((a,b)=>slotIdx(a)-slotIdx(b)||(a<b?-1:1));
+  if(ts.length){s.last=ts[ts.length-1];s.due=hm(tm(s.last)+120);}
+  return s;
+}
+function renderNippo(){
+  const d=state.ui.date;$("#npDate").textContent=md(d);
+  $("#npFuri").textContent="ふりがな："+(state.ui.furi?"入":"切");
+  if(npView&&npView.d!==d)npView=null;
+  $("#npList").classList.toggle("tab-off",!!npView);$("#npDetail").classList.toggle("tab-off",!npView);
+  if(npView){renderNd();return;}
+  const items=dayItems(d);const isToday=d===ymd(new Date());const now=tm(nowHM());
+  $("#npCards").innerHTML=items.length?items.map((x,i)=>{
+    const r=getRec(d,x,false);const m=mold(x.code)||{};const s=recSummary(r,d);
+    const overdue=isToday&&s.due&&tm(s.due)!=null&&now>tm(s.due)+15&&now>tm(s.last);
+    const cls=s.ng||s.mis?"bad":overdue?"alert":"";
+    return`<button class="npc ${cls}" data-i="${i}"><div class="top"><span class="mcno">${esc(x.mc)}</span><span class="code">${esc(x.code)}</span></div>
+      <div class="meta">${esc(m.mat||"")}${m.cav?"　取数"+esc(m.cav):""}${x.start?"　量産 "+esc(x.start)+"〜":""}</div>
+      <div class="bars"><span class="badge ${s.uchi===s.uchiN?"done":s.uchi?"run":""}">打出確認 ${s.uchi}/${s.uchiN}</span>
+      <span class="badge ${s.pt>=4?"done":s.pt?"run":""}">巡回 ${s.pt}回</span>
+      ${s.last?`<span class="badge ${overdue?"warn":""}">最終 ${esc(s.last)}${s.due?" → 次 "+esc(s.due):""}</span>`:""}
+      ${s.ng?`<span class="badge warn" style="background:var(--bad-soft);color:var(--bad)">NG ${s.ng}</span>`:""}
+      ${s.mis?`<span class="badge warn" style="background:var(--bad-soft);color:var(--bad)">材料とバッチ不一致</span>`:""}
+      ${s.abn?`<span class="badge warn">異常 ${s.abn}件</span>`:""}</div></button>`;
+  }).join(""):`<div class="muted">この日に動く号機がありません。週間タブで型替えを入れるか、マスタの「号機」で今載っている型を入れてください。</div>`;
+  if(npDateFor!==d){npSel=new Set(items.map(x=>x.mc));npDateFor=d;}
+  const mcs=[...new Set(items.map(x=>x.mc))];
+  $("#npMcs").innerHTML=mcs.map(m=>`<button class="${npSel.has(m)?"on":""}" data-m="${esc(m)}">${esc(m)}号機</button>`).join("");
+}
+$("#npCards").onclick=e=>{if(longFired)return;const b=e.target.closest(".npc");if(!b)return;const x=dayItems(state.ui.date)[+b.dataset.i];if(!x)return;getRec(state.ui.date,x,true);npView={d:state.ui.date,mc:x.mc,code:x.code};npSeg="pt";renderNippo();window.scrollTo(0,0);};
+$("#npFuri").onclick=()=>{state.ui.furi=!state.ui.furi;save();renderNippo();};
+$("#npMcs").onclick=e=>{const b=e.target.closest("button");if(!b)return;const m=b.dataset.m;npSel.has(m)?npSel.delete(m):npSel.add(m);renderNippo();};
+$("#npAll").onclick=()=>{npSel=new Set(dayItems(state.ui.date).map(x=>x.mc));renderNippo();};
+$("#npNone").onclick=()=>{npSel=new Set();renderNippo();};
+
+/* --- 記録画面 --- */
+function curRec(){return npView?state.nippo[npKey(npView.d,npView.mc,npView.code)]:null;}
+function curItem(){return npView?dayItems(npView.d).find(x=>x.mc===npView.mc&&x.code===npView.code)||{mc:npView.mc,code:npView.code}:null;}
+function gp(o,p){return p.split(".").reduce((a,k)=>a==null?a:a[k],o);}
+function sp(o,p,v){const ks=p.split(".");const l=ks.pop();const t=ks.reduce((a,k)=>(a[k]=a[k]||{}),o);t[l]=v;}
+function tgBtn(r,p,label,cls){const on=!!gp(r,p);return`<button class="tg ${on?"on":""} ${cls||""}" data-tg="${p}">${on?"✓ ":""}${rb(label)}</button>`;}
+function renderNd(){
+  const r=curRec();if(!r){npView=null;renderNippo();return;}
+  const m=mold(r.code)||{};const s=recSummary(r,r.date);const isToday=r.date===ymd(new Date());const now=tm(nowHM());
+  let h=`<div class="nd-head"><button class="btn sm" id="ndBack">◀ 一覧</button><span class="mcno">${esc(r.mc)}</span><span class="code">${esc(r.code)}</span>
+    <span class="muted">${esc(m.mat||"")}${m.color?" "+esc(m.color):""}${m.cav?"　取数 "+esc(m.cav):""}${m.name?"　"+esc(m.name):""}</span><span class="sp"></span>
+    <button class="btn sm" id="ndPrint">🖨 この日報を印刷</button></div>`;
+  const ncs=state.conds.filter(x=>x.date===r.date&&x.mc===r.mc&&x.code===r.code);
+  h+=`<div class="seg">${[["pt","巡回",s.pt+"回"],["uchi","打出確認",s.uchi+"/"+s.uchiN],["mat","材料・型温",""],["cond","条件",ncs.length?ncs.length+"件":"まだ"],["end","異常・終了",s.abn?"異常"+s.abn:""]].map(([k,n,c])=>`<button data-sg="${k}" class="${npSeg===k?"on":""}">${n}<span class="n">${c||"&nbsp;"}</span></button>`).join("")}</div>`;
+  if(npSeg==="pt"){
+    const st=slotStart();const byS={};r.patrols.forEach(p=>{byS[slotIdx(p.t)]=p;});
+    const nowX=tm(nowHM());const nowI=isToday&&nowX>=st-60?slotIdx(nowHM()):-1;
+    h+=`<div class="slots">${Array.from({length:12},(_,i)=>{const p=byS[i];const due=!p&&i<=nowI&&i>=0&&s.pt>0||(!p&&i===nowI);return`<div class="${p?(p.judge==="NG"?"ng":"done"):due?"due":""}"><b>${hm(st+i*120)}</b>${p?esc(p.t):""}</div>`;}).join("")}</div>`;
+    h+=`<button class="bigbtn" id="ndAddPt">＋ ${rb("{巡回|じゅんかい}を{記録|きろく}")}${s.due?`<span style="font-size:13px;font-weight:600">　（次の目安 ${esc(s.due)}）</span>`:""}</button>`;
+    const warn=[];if(s.pt<4)warn.push(`巡回はあと ${4-s.pt} 回（1日に最低4回）`);if(!s.rl)warn.push("RL確認がまだです（1日1回）");if(!s.jig)warn.push("検査治具確認がまだです（1日1回）");
+    if(isToday&&s.due&&now>tm(s.due)+15&&now>tm(s.last))warn.push(`前回の巡回（${s.last}）から2時間以上たっています`);
+    h+=warn.length?warn.map(w=>`<div class="warnbox">${esc(w)}</div>`).join(""):`<div class="okbox">巡回の決まり（4回以上・RL・治具）を満たしています</div>`;
+    h+=`<div style="overflow-x:auto;margin-top:8px"><table class="pt"><thead><tr><th>時刻</th><th>連番</th><th>判定</th><th>RL</th><th>治具</th><th>監視</th><th>材料</th><th>袋</th><th>印</th></tr></thead><tbody>`+
+      (r.patrols.slice().sort((a,b)=>slotIdx(a.t)-slotIdx(b.t)||(a.t<b.t?-1:1)).map(p=>{const mis=bagMismatch(r,p);return`<tr data-pid="${p.id}" class="${p.judge==="NG"?"row-ng":""}"><td><b>${esc(p.t)}</b></td><td>${esc(p.serial??"")}</td><td>${p.judge==="NG"?"<b style='color:var(--bad)'>NG</b>":"OK"}</td><td>${p.rl?"✓":""}</td><td>${p.jig?"✓":""}</td><td>${p.watch?"✓":""}</td><td>${esc(p.mat??"")}</td><td ${mis!=null?"style='color:var(--bad);font-weight:800'":""}>${esc(p.bag??"")}${mis!=null?" ⚠":""}</td><td>${esc(p.by||"")}</td></tr>`;}).join("")||`<tr><td colspan="9" class="muted" style="padding:16px">まだ記録がありません</td></tr>`)+`</tbody></table></div>`;
+  }
+  if(npSeg==="uchi"){
+    h+=`<div class="sec-t">${rb("{打出確認|うちだしかくにん}チェック{項目|こうもく}")}<span class="muted" style="font-weight:400">異常発生時は、異常処置ルールに則り（止める・呼ぶ・待つ）対応のこと</span></div><div class="cklist">`+
+      UCHI.map((u,i)=>{const v=r.uchi[i];return`<div class="ckit ${v===true?"on":v==="na"?"na":""}"><div class="tx">${["①","②","③","④","⑤","⑥","⑦","⑧","⑨","⑩","⑪","⑫"][i]} ${rb(u.t)}</div><div class="bt"><button class="ckb ${v===true?"on":""}" data-uc="${i}" data-v="1">確認</button>${u.na?`<button class="ckb na ${v==="na"?"on":""}" data-uc="${i}" data-v="na">対象外</button>`:""}</div></div>`;}).join("")+`</div>`;
+    h+=`<div class="row" style="margin-top:8px"><button class="btn sm" id="ndAllOk">残りを全部「確認」にする</button></div>`;
+    h+=`<div class="sec-t">${rb("{付帯設備|ふたいせつび}")}<span class="muted" style="font-weight:400">配置・条件（チャックミス・ゲート残・識別・落下・飛散）を確認したら押す</span></div><div class="grid2">${EQUIP.map(([k,n])=>tgBtn(r,"equip."+k,n)).join("")}</div>`;
+    h+=`<div class="sec-t">${rb("{金型|かながた}")}</div><div class="tgrid"><span></span><span class="muted" style="text-align:center">${rb("{固定|こてい}")}</span><span class="muted" style="text-align:center">${rb("{可動|かどう}")}</span>`+
+      [["water","{金型水通|かながたみずとお}し"],["setT","{設定温度|せっていおんど}"],["hose","ホース{確認|かくにん}"]].map(([k,n])=>`<span class="lb">${rb(n)}</span>${tgBtn(r,k+".fix","{固定|こてい}")}${tgBtn(r,k+".mov","{可動|かどう}")}`).join("")+`</div>`;
+    h+=`<div class="sec-t">${rb("{型替|かたがえ}・{打出|うちだし}")}</div><div class="grid2">
+      <label class="f">型替担当者<input data-p="kataPeople" value="${esc(r.kataPeople)}"></label>
+      <label class="f">打出者<input data-p="uchiBy" value="${esc(r.uchiBy)}"></label></div>
+      <div class="grid2" style="margin-top:8px">${tgBtn(r,"misc.watchStart","{打|う}ち{始|はじ}め{監視確認|かんしかくにん}")}${tgBtn(r,"misc.hat","{遮熱|しゃねつ}ハット{使用|しよう}")}${tgBtn(r,"misc.pin3","3Φピン{通|とお}り{確認|かくにん}")}</div>
+      <div class="tgrid" style="margin-top:8px"><span></span><span class="muted" style="text-align:center">{初|はつ}</span><span class="muted" style="text-align:center">終</span>
+      <span class="lb">${rb("スプール{形状|けいじょう}")}</span>${tgBtn(r,"misc.spool1","{初|はつ}")}${tgBtn(r,"misc.spool2","{終|しゅう}")}
+      <span class="lb" style="font-size:12px">${rb("{合|あ}いマーク・チャック{板|いた}・ニッパー・ボルト{緩|ゆる}み")}</span>${tgBtn(r,"misc.bolt1","{初|はつ}")}${tgBtn(r,"misc.bolt2","{終|しゅう}")}</div>`.replace(/\{初\|はつ\}|\{終\|しゅう\}/g,(x)=>rb(x));
+  }
+  if(npSeg==="mat"){
+    const k=bagRatio(r);
+    h+=`<div class="sec-t">${rb("{材料|ざいりょう}の{準備|じゅんび}")}</div><div class="grid2">
+      <label class="f">使用準備材料数（本）<input type="number" inputmode="numeric" data-p="prep.mat" value="${esc(r.prep.mat??"")}"></label>
+      <label class="f">使用準備バッチ量（袋）<input type="number" inputmode="numeric" data-p="prep.bag" value="${esc(r.prep.bag??"")}"></label>
+      <label class="f">バッチ1袋当たり（g）<input type="number" inputmode="decimal" data-p="prep.g" value="${esc(r.prep.g??"")}"></label>
+      <label class="f">材料設置時間<span class="row"><input type="time" data-p="prep.setTime" value="${esc(r.prep.setTime||"")}" style="flex:1"><button class="btn sm" data-now="prep.setTime">今</button></span></label></div>
+      <div class="grid2" style="margin-top:8px">${tgBtn(r,"prep.qtyChk","{材料設置時点|ざいりょうせっちじてん}での{数量確認|すうりょうかくにん}")}</div>
+      ${k!=null?`<div class="okbox">材料1本あたりバッチ ${k.toFixed(2)} 袋。巡回で入れた残数がこの割合から1袋以上ずれると赤で知らせます。</div>`:`<div class="muted" style="margin-top:6px">材料数とバッチ量を入れると、巡回のたびに残数の食い違い（入れ忘れ・入れすぎ）を自動で調べます。</div>`}`;
+    h+=`<div class="sec-t">${rb("{型温測定|かたおんそくてい}")}</div><div class="tgrid" style="grid-template-columns:auto 1fr 1fr auto">
+      <span></span><span class="muted" style="text-align:center">固定（℃）</span><span class="muted" style="text-align:center">可動（℃）</span><span class="muted">水漏れ</span>
+      <span class="lb">16:00<br><small>金型確認清掃</small></span><input type="number" inputmode="decimal" class="search" data-p="temp.a.fix" value="${esc(r.temp.a.fix??"")}"><input type="number" inputmode="decimal" class="search" data-p="temp.a.mov" value="${esc(r.temp.a.mov??"")}">${tgBtn(r,"temp.a.leak","なし")}
+      <span class="lb">0:00<br><small>実測</small></span><input type="number" inputmode="decimal" class="search" data-p="temp.b.fix" value="${esc(r.temp.b.fix??"")}"><input type="number" inputmode="decimal" class="search" data-p="temp.b.mov" value="${esc(r.temp.b.mov??"")}">${tgBtn(r,"temp.b.leak","なし")}</div>`;
+    h+=`<div class="sec-t">乾燥</div><div class="grid2"><label class="f">乾燥温度（℃）<input type="number" data-p="dryT" value="${esc(r.dryT??"")}"></label>
+      <label class="f">乾燥スタート時間<span class="row"><input type="time" data-p="dryStart" value="${esc(r.dryStart||"")}" style="flex:1"><button class="btn sm" data-now="dryStart">今</button></span></label></div>`;
+  }
+  if(npSeg==="cond"){
+    const c=m.cond;
+    h+=`<button class="bigbtn" id="ndAddCd">＋ ${rb("{成形条件|せいけいじょうけん}を{記録|きろく}")}<span style="font-size:13px;font-weight:600">　（ロット開始・条件変更のとき）</span></button>`;
+    h+=`<div class="moldinfo" style="margin-top:8px">${c?`基準条件：${esc(c.setDate||"")} ${esc(c.label||"")}　${esc(c.mcName||"")}　改訂履歴 ${(m.condHist||[]).length}件`:`<span style="color:var(--warn)">基準条件が未登録です</span>`}
+      <div class="row" style="margin-top:6px"><button class="btn sm" id="ndBc">基準条件を${c?"見る・直す":"登録する"}</button><button class="btn sm" id="ndCdPrint">🖨 成形条件記録表を印刷</button></div></div>`;
+    if(!ncs.length)h+=`<div class="warnbox">今日のこの型の条件記録がまだです（成形ロット開始時、条件変更時には必ず記録）</div>`;
+    h+=condsOf(r.code).length?`<div class="muted" style="margin:8px 0 4px">最近8回の記録（列の見出しを押すと修正）。赤＝公差外、オレンジ＝基準と違う</div><div style="overflow-x:auto">${condMatrix(r.code,8)}</div>`:"";
+  }
+  if(npSeg==="end"){
+    h+=`<button class="bigbtn" id="ndAddAb" style="background:var(--bad);color:#fff">＋ ${rb("{異常|いじょう}を{報告|ほうこく}")}</button>`;
+    h+=r.abn.length?`<div style="overflow-x:auto;margin-top:8px"><table class="pt"><thead><tr><th>時刻</th><th>異常内容</th><th>対処</th><th>捨てショット</th><th>報告</th></tr></thead><tbody>`+r.abn.map(a=>`<tr data-aid="${a.id}"><td><b>${esc(a.t)}</b></td><td style="text-align:left">${esc(a.text)}</td><td style="text-align:left">${esc(a.act)}</td><td>${esc(a.shots??"")}</td><td>${esc(a.by||"")}</td></tr>`).join("")+`</tbody></table></div>`:`<div class="muted" style="margin:8px 0">異常の報告はありません</div>`;
+    h+=`<div class="sec-t">ASSY / 部品名 / ロット</div><div class="grid2">
+      <label class="f">① 部品名<input data-p="assy.0.name" value="${esc(r.assy[0].name||"")}"></label><label class="f">① ロット<input data-p="assy.0.lot" value="${esc(r.assy[0].lot||"")}"></label>
+      <label class="f">② 部品名<input data-p="assy.1.name" value="${esc(r.assy[1].name||"")}"></label><label class="f">② ロット<input data-p="assy.1.lot" value="${esc(r.assy[1].lot||"")}"></label></div>`;
+    h+=`<div class="sec-t">終わり</div><div class="grid2"><label class="f">生産数<input type="number" inputmode="numeric" data-p="produced" value="${esc(r.produced??"")}"></label>
+      <label class="f">終品取り<input data-p="endBy" value="${esc(r.endBy||"")}" list="pplList"></label></div>
+      <label class="f" style="margin-top:8px">メモ<textarea data-p="note">${esc(r.note||"")}</textarea></label>`;
+    const c=state.changes.find(c=>c.date===r.date&&c.mc===r.mc&&c.to===r.code);
+    if(c&&c.qty)h+=`<div class="muted" style="margin-top:6px">予定数 ${Number(c.qty).toLocaleString()}${r.produced?"　→ 差 "+(r.produced-c.qty).toLocaleString():""}</div>`;
+  }
+  $("#npDetail").innerHTML=h;
+  $("#pplList").innerHTML=state.people.map(p=>`<option>${esc(p)}</option>`).join("");
+}
+$("#npDetail").addEventListener("click",e=>{
+  if(longFired)return;const r=curRec();if(!r)return;
+  const t=e.target;
+  if(t.closest("#ndBack")){npView=null;renderNippo();return;}
+  if(t.closest("#ndPrint")){doPrint(`<div class="pp"><style>@page{size:A4 portrait;margin:8mm}</style>${nippoHTML(r.date,curItem(),r)}</div>`);return;}
+  const sg=t.closest("[data-sg]");if(sg){npSeg=sg.dataset.sg;renderNd();return;}
+  if(t.closest("#ndAddPt")){openPt(null);return;}
+  if(t.closest("#ndAddAb")){openAb(null);return;}
+  if(t.closest("#ndAddCd")){const ch=state.changes.find(c=>c.date===r.date&&c.mc===r.mc&&c.to===r.code);openCd({date:r.date,mc:r.mc,code:r.code,chId:ch?ch.id:""});return;}
+  if(t.closest("#ndBc")){openBc(r.code);return;}
+  if(t.closest("#ndCdPrint")){doPrint(condPrintHTML(r.code));return;}
+  const th=t.closest("th[data-cid]");if(th){const x=state.conds.find(q=>q.id===th.dataset.cid);if(x)openCd({date:x.date,mc:x.mc,code:x.code,chId:x.chId},x.id);return;}
+  const tr=t.closest("tr[data-pid]");if(tr){openPt(tr.dataset.pid);return;}
+  const ta=t.closest("tr[data-aid]");if(ta){openAb(ta.dataset.aid);return;}
+  const uc=t.closest("[data-uc]");if(uc){const i=+uc.dataset.uc;const v=uc.dataset.v==="na"?"na":true;r.uchi[i]=r.uchi[i]===v?false:v;if(!r.uchiAt)r.uchiAt=nowHM();save();renderNd();return;}
+  if(t.closest("#ndAllOk")){UCHI.forEach((_,i)=>{if(!r.uchi[i])r.uchi[i]=true;});r.uchiAt=r.uchiAt||nowHM();save();renderNd();toast("全部「確認」にしました");return;}
+  const tg=t.closest("[data-tg]");if(tg){sp(r,tg.dataset.tg,!gp(r,tg.dataset.tg));save();renderNd();return;}
+  const nw=t.closest("[data-now]");if(nw){sp(r,nw.dataset.now,nowHM());save();renderNd();return;}
+});
+$("#npDetail").addEventListener("change",e=>{const p=e.target.dataset.p;if(!p)return;const r=curRec();let v=e.target.value;if(e.target.type==="number"&&v!=="")v=+v;sp(r,p,v);save();if(p.startsWith("prep.")||p==="produced")renderNd();});
+
+/* --- 巡回シート --- */
+let ptId=null,ptJudge="OK",ptTg={},ptBy="";
+function lastPatrol(r){return r.patrols.slice().sort((a,b)=>slotIdx(a.t)-slotIdx(b.t)||(a.t<b.t?-1:1)).pop();}
+function openPt(id){
+  const r=curRec();const p=id?r.patrols.find(x=>x.id===id):null;ptId=p?p.id:null;
+  const lp=lastPatrol(r);
+  $("#ptTitle").innerHTML=p?"巡回を修正":rb("{巡回|じゅんかい}を{記録|きろく}");
+  $("#ptJudgeL").innerHTML=rb("{製品|せいひん}の{判定|はんてい}");$("#ptChkL").innerHTML=rb("{確認|かくにん}");
+  $("#ptMatL").innerHTML=rb("{材料残数|ざいりょうざんすう}");$("#ptBagL").innerHTML=rb("バッチ{袋残数|ふくろざんすう}");$("#ptByL").innerHTML=rb("{印|いん}（{記録|きろく}した{人|ひと}）");
+  $("#ptSerialL").firstChild.textContent=rbPlain("連番");
+  $("#ptT").value=p?p.t:nowHM();
+  $("#ptSerial").value=p?p.serial??"":"";
+  ptJudge=p?p.judge:"OK";
+  ptTg=p?{rl:p.rl,jig:p.jig,watch:p.watch}:{rl:!r.patrols.some(x=>x.rl),jig:!r.patrols.some(x=>x.jig),watch:true};
+  $("#ptMat").value=p?p.mat??"":(lp?lp.mat??"":(r.prep.mat??""));
+  $("#ptBag").value=p?p.bag??"":(lp?lp.bag??"":(r.prep.bag??""));
+  ptBy=p?p.by:(state.ui.me||"");
+  $("#ptDel").style.display=p?"":"none";
+  renderPt();openSheet("#ptSheet");
+}
+function renderPt(){
+  document.querySelectorAll("#ptSheet .okng button").forEach(b=>b.classList.toggle("on",b.dataset.v===ptJudge));
+  $("#ptToggles").innerHTML=PTCHK.map(([k,n])=>`<button class="tg ${ptTg[k]?"on":""}" data-k="${k}">${ptTg[k]?"✓ ":""}${rb(n)}</button>`).join("");
+  $("#ptBy").innerHTML=state.people.map(p=>`<button class="${p===ptBy?"on":""}" data-p="${esc(p)}">${esc(p)}</button>`).join("");
+  const r=curRec();const mis=bagMismatch(r,{mat:$("#ptMat").value,bag:$("#ptBag").value});
+  $("#ptWarn").innerHTML=mis!=null?`<div class="warnbox bad">⚠ 材料 ${esc($("#ptMat").value)}本 なら、バッチは約 ${mis.toFixed(1)}袋 のはずです。食い違いがあるので責任者に報告してください。</div>`:"";
+}
+document.querySelector("#ptSheet .okng").onclick=e=>{const b=e.target.closest("button");if(b){ptJudge=b.dataset.v;renderPt();}};
+$("#ptToggles").onclick=e=>{const b=e.target.closest("button");if(b){ptTg[b.dataset.k]=!ptTg[b.dataset.k];renderPt();}};
+$("#ptBy").onclick=e=>{const b=e.target.closest("button");if(b){ptBy=b.dataset.p;renderPt();}};
+document.querySelectorAll("#ptSheet .stepper").forEach(st=>{
+  const inp=st.querySelector("input");const[mi,pl]=st.querySelectorAll("button");
+  mi.onclick=()=>{inp.value=Math.max(0,(+inp.value||0)-1);renderPt();};
+  pl.onclick=()=>{inp.value=(+inp.value||0)+1;renderPt();};
+  inp.oninput=renderPt;
+});
+$("#ptClose").onclick=closeSheets;
+$("#ptSave").onclick=()=>{
+  const r=curRec();if(!ptBy){toast("印（記録した人）を選んでください");return;}
+  const num=v=>v===""?"":+v;
+  const p={id:ptId||uid(),t:$("#ptT").value||nowHM(),serial:num($("#ptSerial").value),judge:ptJudge,rl:!!ptTg.rl,jig:!!ptTg.jig,watch:!!ptTg.watch,mat:num($("#ptMat").value),bag:num($("#ptBag").value),by:ptBy};
+  const i=r.patrols.findIndex(x=>x.id===p.id);if(i>=0)r.patrols[i]=p;else r.patrols.push(p);
+  state.ui.me=ptBy;save();closeSheets();renderNd();
+  toast(ptJudge==="NG"?"NGを記録しました。異常報告も入れてください":"記録しました");
+  if(ptJudge==="NG"){npSeg="end";renderNd();}
+};
+$("#ptDel").onclick=()=>{const b=$("#ptDel");if(!b.dataset.arm){b.dataset.arm="1";b.textContent="もう一度押すと削除";setTimeout(()=>{b.dataset.arm="";b.textContent="削除";},2500);return;}const r=curRec();r.patrols=r.patrols.filter(x=>x.id!==ptId);b.dataset.arm="";b.textContent="削除";save();closeSheets();renderNd();};
+
+/* --- 異常シート --- */
+let abId=null,abBy="";
+function openAb(id){
+  const r=curRec();const a=id?r.abn.find(x=>x.id===id):null;abId=a?a.id:null;
+  $("#abT").value=a?a.t:nowHM();$("#abShots").value=a?a.shots??"":"";$("#abText").value=a?a.text:"";$("#abAct").value=a?a.act:"";
+  abBy=a?a.by:(state.ui.me||"");
+  $("#abKinds").innerHTML=AB_KINDS.map(k=>`<button data-k="${k}">${k}</button>`).join("");
+  $("#abActs").innerHTML=AB_ACTS.map(k=>`<button data-k="${k}">${k}</button>`).join("");
+  $("#abDel").style.display=a?"":"none";renderAbBy();openSheet("#abSheet");
+}
+function renderAbBy(){$("#abBy").innerHTML=state.people.map(p=>`<button class="${p===abBy?"on":""}" data-p="${esc(p)}">${esc(p)}</button>`).join("");}
+function addWord(sel,w){const t=$(sel);const parts=t.value.split("、").map(s=>s.trim()).filter(Boolean);if(!parts.includes(w))parts.push(w);t.value=parts.join("、");}
+$("#abKinds").onclick=e=>{const b=e.target.closest("button");if(b)addWord("#abText",b.dataset.k);};
+$("#abActs").onclick=e=>{const b=e.target.closest("button");if(b)addWord("#abAct",b.dataset.k);};
+$("#abBy").onclick=e=>{const b=e.target.closest("button");if(b){abBy=b.dataset.p;renderAbBy();}};
+$("#abClose").onclick=closeSheets;
+$("#abSave").onclick=()=>{
+  const r=curRec();if(!$("#abText").value.trim()){toast("異常内容を選ぶか書いてください");return;}
+  const a={id:abId||uid(),t:$("#abT").value||nowHM(),shots:$("#abShots").value===""?"":+$("#abShots").value,text:$("#abText").value.trim(),act:$("#abAct").value.trim(),by:abBy};
+  const i=r.abn.findIndex(x=>x.id===a.id);if(i>=0)r.abn[i]=a;else r.abn.push(a);
+  r.abn.sort((x,y)=>slotIdx(x.t)-slotIdx(y.t)||(x.t<y.t?-1:1));
+  if(abBy)state.ui.me=abBy;save();closeSheets();renderNd();toast("異常を記録しました");
+};
+$("#abDel").onclick=()=>{const b=$("#abDel");if(!b.dataset.arm){b.dataset.arm="1";b.textContent="もう一度押すと削除";setTimeout(()=>{b.dataset.arm="";b.textContent="削除";},2500);return;}const r=curRec();r.abn=r.abn.filter(x=>x.id!==abId);b.dataset.arm="";b.textContent="削除";save();closeSheets();renderNd();};
+
+/* --- 印刷（記入済み） --- */
+function nippoHTML(d,x,r){
+  const m=mold(x.code)||{};const st=slotStart();
+  const slots=Array.from({length:12},(_,i)=>hm(st+i*120));
+  const P={};if(r)r.patrols.forEach(p=>{P[slotIdx(p.t)]=p;});
+  const v=(i,f)=>{const p=P[i];if(!p)return"";const val=f(p);return val==null?"":esc(val);};
+  const dd=pd(d);const ck=b=>b?"☑":"□";
+  const row=(lab,f)=>`<tr><td class="l" style="width:14%">${lab}</td>${slots.map((_,i)=>`<td>${f(i)}</td>`).join("")}</tr>`;
+  const R=r||{uchi:{},equip:{},water:{},setT:{},hose:{},misc:{},prep:{},temp:{a:{},b:{}},abn:[],assy:[{},{}]};
+  const uchiCells=UCHI.map((u,i)=>`<tr><td class="ckm">${R.uchi[i]===true?"☑":R.uchi[i]==="na"?"－":"□"}</td><td class="ckc">${["①","②","③","④","⑤","⑥","⑦","⑧","⑨","⑩","⑪","⑫"][i]}${esc(rbPlain(u.t))}</td></tr>`).join("");
+  const abn=(R.abn||[]).map(a=>`${esc(a.t)} ${esc(a.text)}${a.shots!==""&&a.shots!=null?"（捨て"+esc(a.shots)+"）":""}`).join(" / ");
+  const act=(R.abn||[]).map(a=>esc(a.act||"")).filter(Boolean).join(" / ");
+  return`<div class="p-nippo" style="height:auto;border:0"><table style="border:0"><tr><td style="border:0;padding:0;vertical-align:top;width:76%">
+  <table class="hd"><tr><td style="width:7%">日付</td><td class="v" style="width:19%">${dd.getFullYear()}/${dd.getMonth()+1}/${dd.getDate()}（${DOW[dd.getDay()]}）</td><td style="width:7%">製番</td><td class="v" style="width:22%">${esc(x.code)}</td><td style="width:6%">成形</td><td class="v" style="width:10%">${esc(x.mc)}号機</td><td style="width:6%">取数</td><td class="v" style="width:6%">${esc(m.cav||"　")}</td><td style="width:6%">材質</td><td class="v">${esc(m.mat||"")}</td></tr></table>
+  <table><tr><td class="l" style="width:14%">時間</td>${slots.map(s=>`<td><b>${s}</b></td>`).join("")}</tr>
+  ${row("記録時刻",i=>v(i,p=>p.t))}${row("連番",i=>v(i,p=>p.serial))}${row("OK / NG",i=>P[i]?(P[i].judge==="NG"?"<b>NG</b>":"OK"):"OK NG")}
+  ${row("RL確認",i=>v(i,p=>p.rl?"✓":""))}${row("検査治具確認",i=>v(i,p=>p.jig?"✓":""))}${row("監視",i=>v(i,p=>p.watch?"✓":""))}
+  ${row("材料残数",i=>P[i]?v(i,p=>p.mat)+"本":"　本")}${row("バッチ袋残数",i=>P[i]?v(i,p=>p.bag)+"袋"+(r&&bagMismatch(r,P[i])!=null?"<b>⚠</b>":""):"　袋")}${row("印",i=>v(i,p=>p.by))}</table>
+  <div style="font-size:8px;margin:1px 0">※工程内チェックを1日（24H）の場合、最低4回以上チェックする事　RL・治具確認は1回/日、材料とバッチ残数を確認し不一致があった場合、報告を行う事</div>
+  <table style="margin-top:2px"><tr><td class="l" colspan="4">${EQUIP.map(([k,n])=>ck(R.equip[k])+rbPlain(n)).join("　")}</td><td>水通し</td><td>固定${ck(R.water.fix)} 可動${ck(R.water.mov)}</td></tr>
+  <tr><td class="l" style="width:16%">使用準備材料数</td><td style="width:10%">${esc(R.prep.mat??"")}本</td><td class="l" style="width:16%">使用準備バッチ量</td><td style="width:10%">${esc(R.prep.bag??"")}袋</td><td>設定温度</td><td>固定${ck(R.setT.fix)} 可動${ck(R.setT.mov)}</td></tr>
+  <tr><td class="l">バッチ1袋当たり</td><td>${esc(R.prep.g??"")}g</td><td class="l">数量確認 ${ck(R.prep.qtyChk)}</td><td>設置 ${esc(R.prep.setTime||"　：")}</td><td>ホース確認</td><td>固定${ck(R.hose.fix)} 可動${ck(R.hose.mov)}</td></tr>
+  <tr><td class="l">型替担当者</td><td colspan="2">${esc(R.kataPeople||"")}</td><td>打出 ${esc(R.uchiBy||"")}</td><td>打ち始め監視</td><td>${ck(R.misc.watchStart)}</td></tr>
+  <tr><td class="l">スプール形状</td><td>初${ck(R.misc.spool1)} 終${ck(R.misc.spool2)}</td><td class="l" colspan="2" style="font-size:8.5px">合いマーク・チャック板・ニッパー・ボルト緩み 初${ck(R.misc.bolt1)} 終${ck(R.misc.bolt2)}</td><td>遮熱ハット${ck(R.misc.hat)}</td><td>3Φピン${ck(R.misc.pin3)}</td></tr></table>
+  <table style="margin-top:2px"><tr><td class="l" style="width:16%">型温測定</td><td>時間</td><td>固定</td><td>可動</td><td>水漏れなし</td><td class="l" style="width:16%">終品取り</td><td>${esc(R.endBy||"")}</td></tr>
+  <tr><td class="l">金型確認清掃</td><td>16:00</td><td>${esc(R.temp.a.fix??"")}</td><td>${esc(R.temp.a.mov??"")}</td><td>${ck(R.temp.a.leak)}</td><td class="l">生産数</td><td>${R.produced!==""&&R.produced!=null?Number(R.produced).toLocaleString():""}</td></tr>
+  <tr><td class="l">実測</td><td>0:00</td><td>${esc(R.temp.b.fix??"")}</td><td>${esc(R.temp.b.mov??"")}</td><td>${ck(R.temp.b.leak)}</td><td class="l">乾燥温度 / スタート</td><td>${R.dryT!==""&&R.dryT!=null?esc(R.dryT)+"℃":"　℃"} / ${esc(R.dryStart||"　：")}</td></tr></table>
+  <table style="margin-top:2px"><tr><td class="l" style="width:16%;height:30px">異常報告</td><td class="l" style="font-size:9.5px">${abn}</td></tr><tr><td class="l">対処</td><td class="l" style="font-size:9.5px">${act}</td></tr>
+  <tr><td class="l">①ASSY/部品名/ロット</td><td class="l">${esc(R.assy[0].name||"")} / ${esc(R.assy[0].lot||"")}　　②ASSY/部品名/ロット　${esc(R.assy[1].name||"")} / ${esc(R.assy[1].lot||"")}</td></tr></table>
+  </td><td style="border:0;padding:0 0 0 4px;vertical-align:top">
+  <table><tr><td colspan="2" style="font-weight:800">打出確認チェック項目${R.uchiAt?" "+esc(R.uchiAt):""}</td></tr><tr><td colspan="2" style="font-size:8px">異常発生時は、異常処置ルールに則り（止める・呼ぶ・待つ）対応のこと</td></tr>${uchiCells}</table>
+  </td></tr></table></div>`;
+}
+$("#npPrint").onclick=()=>{
+  const d=state.ui.date;const it=dayItems(d).filter(x=>npSel.has(x.mc));if(!it.length){toast("号機を選んでください");return;}
+  let h="";it.forEach(x=>{h+=`<div class="pp"><style>@page{size:A4 portrait;margin:8mm}</style>${nippoHTML(d,x,getRec(d,x,false))}</div>`;});
+  doPrint(h);
+};
+$("#npCsv").onclick=()=>{
+  const[f,t]=statRange();const rs=Object.values(state.nippo).filter(r=>r.date>=f&&r.date<=t).sort((a,b)=>(a.date+a.mc).localeCompare(b.date+b.mc));
+  const rows=[["日付","号機","製番","区分","時刻","連番","判定","RL","治具","監視","材料残数","バッチ袋残数","不一致","印","異常内容","対処","捨てショット","打出確認済","生産数"]];
+  rs.forEach(r=>{const s=recSummary(r,r.date);
+    r.patrols.forEach(p=>rows.push([r.date,r.mc,r.code,"巡回",p.t,p.serial,p.judge,p.rl?"✓":"",p.jig?"✓":"",p.watch?"✓":"",p.mat,p.bag,bagMismatch(r,p)!=null?"⚠":"",p.by,"","","",s.uchi+"/"+s.uchiN,r.produced]));
+    r.abn.forEach(a=>rows.push([r.date,r.mc,r.code,"異常",a.t,"","","","","","","","",a.by,a.text,a.act,a.shots,s.uchi+"/"+s.uchiN,r.produced]));
+    if(!r.patrols.length&&!r.abn.length)rows.push([r.date,r.mc,r.code,"記録なし","","","","","","","","","","","","","",s.uchi+"/"+s.uchiN,r.produced]);});
+  const csv="﻿"+rows.map(r=>r.map(v=>{v=String(v??"");return/[",\n]/.test(v)?'"'+v.replace(/"/g,'""')+'"':v;}).join(",")).join("\r\n");
+  dl(csv,`成形日報_${f}_${t}.csv`,"text/csv");
+};
+
+/* ---------- 条件（基準・記録） ---------- */
+// [key, 大項目, 小項目, 単位(P=圧力 V=速度), 既定公差]
+const CI=[
+  ["noz","加熱部温度","ノズル","℃",10],["front","","前部","℃",10],["mid","","中部","℃",10],["rear","","後部","℃",10],["last","","最後部","℃",10],
+  ["mMov","金型温度","可動側","℃",5],["mFix","","固定側","℃",5],
+  ["t1","射出時間","一次","秒"],["t2","","二次","秒"],["t3","","三次","秒"],
+  ["cool","冷却時間","","秒"],["cyc","1サイクル","","秒"],
+  ["p1","射出圧力","一次","P"],["p2","","二次","P"],["p3","","三次","P"],
+  ["v1","射出速度","一次","V"],["v2","","二次","V"],["v3","","三次","V"],
+  ["meter","スクリュー位置","計量","mm"],["vp","","保圧切替","mm"],["cush","","クッション量","mm"],
+  ["rpm","スクリュー回転数","","rpm"],["back","スクリュー背圧","","P"],["mt","計量時間","","秒"],
+  ["clamp","実型締力","","ton"],["wt","製品単重","","g"],
+];
+const SEED_COND={};
+const SEED_HIST={};
+function seedConds(s){
+  Object.keys(SEED_COND).forEach(k=>{
+    if(!s.molds[k])s.molds[k]={code:k,name:"",mat:"",grade:"",color:"",cav:"",mc:"",cyc:"",mb:"",mbg:"",dryT:"",dryH:"",note:""};
+    const m=s.molds[k];if(!m.cond)m.cond=JSON.parse(JSON.stringify(SEED_COND[k]));if(!m.condHist)m.condHist=JSON.parse(JSON.stringify(SEED_HIST[k]||[]));
+  });
+}
+function unitOf(c,u){return u==="P"?(c&&c.uP||"MPa"):u==="V"?(c&&c.uV||"mm/s"):u;}
+function num(v){if(v===""||v==null)return null;const m=String(v).match(/-?\d+(\.\d+)?/);return m?parseFloat(m[0]):null;}
+function judge(cond,k,val){
+  if(val===""||val==null)return"";
+  if(!cond)return"";const b=cond.v[k],t=cond.tol?cond.tol[k]:"";
+  const nb=num(b),nv=num(val);
+  if(t!==""&&t!=null&&nb!=null&&nv!=null)return Math.abs(nv-nb)>+t+1e-9?"out":(nv!==nb?"in":"ok");
+  if(nb!=null&&nv!=null)return nv===nb?"ok":"diff";
+  return String(b)===String(val)?"ok":(b===""||b==null?"":"diff");
+}
+function condsOf(code){return state.conds.filter(r=>r.code===code).sort((a,b)=>(a.date+" "+a.t)<(b.date+" "+b.t)?-1:1);}
+function recIssues(r){const m=mold(r.code);const c=r.base||(m&&m.cond);let out=0,diff=0;CI.forEach(([k])=>{const j=judge(c,k,r.v[k]);if(j==="out")out++;if(j==="diff"||j==="in")diff++;});
+  const needAppr=(r.kind==="条件変更"||out>0)&&!r.appr;return{out,diff,needAppr};}
+
+/* --- 基準条件の編集 --- */
+let bcCode=null;
+function openBc(code){
+  bcCode=code;const m=state.molds[code];const c=m.cond||{v:{},tol:{}};
+  $("#bcTitle").textContent=code+" の基準条件";
+  $("#bcDate").value=c.setDate||ymd(new Date());$("#bcLabel").value=c.label||"";$("#bcMc").value=c.mcName||"";
+  $("#bcUP").value=c.uP||"MPa";$("#bcUV").value=c.uV||"mm/s";$("#bcShort").value=c.shortP??"";$("#bcFlash").value=c.flashP??"";$("#bcNote").value=c.note||"";
+  renderBcRows(c);
+  const h=m.condHist||[];
+  $("#bcHist").innerHTML=h.length?`<div class="sec-t">改訂履歴（ISO 7.5.3 旧版保管）</div>`+h.slice().reverse().map(x=>`<div class="muted">・${esc(x.setDate)} 設定「${esc(x.label||"")}」→ ${esc(x.archivedAt)} に改訂</div>`).join(""):"";
+  openSheet("#bcSheet");
+}
+function renderBcRows(c){
+  const uP=$("#bcUP").value,uV=$("#bcUV").value;const cc={uP,uV};
+  $("#bcRows").innerHTML=`<thead><tr><th>項目</th><th>基準</th><th>公差 ±</th></tr></thead><tbody>`+CI.map(([k,g,s,u,dt])=>`<tr><td class="l">${esc(g)}${g&&s?" ":""}${esc(s)} <span class="muted">${esc(unitOf(cc,u))}</span></td><td><input data-bv="${k}" value="${esc(c.v[k]??"")}" inputmode="decimal"></td><td><input data-bt="${k}" value="${esc((c.tol||{})[k]??"")}" inputmode="decimal" placeholder="—"></td></tr>`).join("")+"</tbody>";
+}
+["#bcUP","#bcUV"].forEach(s=>$(s).addEventListener("change",()=>{const c=collectBc();renderBcRows(c);}));
+function collectBc(){
+  const v={},tol={};document.querySelectorAll("#bcRows [data-bv]").forEach(i=>{const x=i.value.trim();v[i.dataset.bv]=x===""?"":(isNaN(+x)?x:+x);});
+  document.querySelectorAll("#bcRows [data-bt]").forEach(i=>{const x=i.value.trim();tol[i.dataset.bt]=x===""?"":+x;});
+  return{setDate:$("#bcDate").value,label:$("#bcLabel").value.trim(),mcName:$("#bcMc").value.trim(),uP:$("#bcUP").value,uV:$("#bcUV").value,shortP:$("#bcShort").value===""?"":+$("#bcShort").value,flashP:$("#bcFlash").value===""?"":+$("#bcFlash").value,note:$("#bcNote").value.trim(),v,tol};
+}
+$("#bcClose").onclick=closeSheets;
+$("#bcSave").onclick=()=>{
+  const m=state.molds[bcCode];const nc=collectBc();
+  if(m.cond&&JSON.stringify(m.cond.v)+JSON.stringify(m.cond.tol)!==JSON.stringify(nc.v)+JSON.stringify(nc.tol)){
+    m.condHist=m.condHist||[];m.condHist.push(Object.assign({},m.cond,{archivedAt:ymd(new Date())}));toast("旧版を履歴に残して保存しました");
+  }else toast("保存しました");
+  m.cond=nc;save();closeSheets();render();
+};
+
+/* --- 条件記録シート --- */
+let cdCtx=null,cdKind="ロット開始",cdBy="",cdAppr="",cdId=null;
+function openCd(ctx,id){
+  cdCtx=ctx;const m=mold(ctx.code)||{};const c=m.cond;
+  const r=id?state.conds.find(x=>x.id===id):null;cdId=r?r.id:null;
+  $("#cdTitle").textContent=`${ctx.mc}号機 ${ctx.code} 条件記録`;
+  $("#cdBase").innerHTML=c?`基準：${esc(c.setDate||"")} ${esc(c.label||"")}　${esc(c.mcName||"")}${c.shortP!==""&&c.shortP!=null?"　ショート下限圧 "+esc(c.shortP):""}${c.flashP!==""&&c.flashP!=null?"　バリ上限圧 "+esc(c.flashP):""}${c.note?"<br>📝 "+esc(c.note):""}`:`<span style="color:var(--warn)">この金型の基準条件がまだありません。マスタ → 金型 →「基準条件」で入れると、公差の判定ができます。</span>`;
+  cdKind=r?r.kind:(condsOf(ctx.code).some(x=>x.date===ctx.date&&x.mc===ctx.mc)?"条件変更":"ロット開始");
+  cdBy=r?r.by:(state.ui.me||"");cdAppr=r?r.appr||"":"";
+  $("#cdT").value=r?r.t:nowHM();$("#cdShots").value=r?r.shots??"":"";$("#cdLot").value=r?r.lot||"":"";$("#cdReason").value=r?r.reason||"":"";
+  $("#cdRows").innerHTML=`<thead><tr><th>項目</th><th>基準</th><th>公差</th><th>実測</th><th></th></tr></thead><tbody>`+CI.map(([k,g,s,u])=>{const b=c?c.v[k]:"";const t=c&&c.tol?c.tol[k]:"";
+    return`<tr data-k="${k}"><td class="l">${esc(g)}${g&&s?" ":""}${esc(s)} <span class="muted">${esc(unitOf(c,u))}</span></td><td>${esc(b??"")}</td><td>${t!==""&&t!=null?"±"+esc(t):"−"}</td><td><input data-cv="${k}" inputmode="decimal" value="${esc(r?r.v[k]??"":"")}" placeholder="${esc(b??"")}"></td><td class="jd"></td></tr>`;}).join("")+"</tbody>";
+  $("#cdDel").style.display=r?"":"none";
+  renderCdMeta();cdJudge();openSheet("#cdSheet");
+}
+function renderCdMeta(){
+  $("#cdKinds").innerHTML=["ロット開始","条件変更","定期確認"].map(k=>`<button class="${k===cdKind?"on":""}" data-k="${k}">${k}</button>`).join("");
+  $("#cdBy").innerHTML=state.people.map(p=>`<button class="${p===cdBy?"on":""}" data-p="${esc(p)}">${esc(p)}</button>`).join("");
+  $("#cdAppr").innerHTML=`<button class="${!cdAppr?"on":""}" data-p="">未承認</button>`+state.people.map(p=>`<button class="${p===cdAppr?"on":""}" data-p="${esc(p)}">${esc(p)}</button>`).join("");
+  const m=mold(cdCtx.code)||{};const n=+$("#cdShots").value;$("#cdShotsX").textContent=n?`× 取数${m.cav||1} ＝ ${n*(+m.cav||1)}個`:"";
+}
+function cdJudge(){
+  const m=mold(cdCtx.code);const c=m&&m.cond;let out=0,diff=0,filled=0;
+  document.querySelectorAll("#cdRows tr[data-k]").forEach(tr=>{const k=tr.dataset.k;const v=tr.querySelector("input").value.trim();if(v!=="")filled++;const j=judge(c,k,v);
+    tr.className=j==="out"?"j-out":j==="diff"?"j-diff":"";tr.querySelector(".jd").innerHTML=j==="out"?"<b style='color:var(--bad)'>公差外</b>":j==="diff"?"<span style='color:var(--warn)'>基準と違う</span>":j==="in"?"<span class='muted'>公差内</span>":j==="ok"?"<span style='color:var(--ok)'>✓</span>":"";
+    if(j==="out")out++;if(j==="diff")diff++;});
+  const w=[];
+  if(out)w.push(`<div class="warnbox bad">⚠ 公差を外れた項目が ${out} 件あります。責任者に報告し、承認を受けてください。</div>`);
+  if(diff)w.push(`<div class="warnbox">基準と違う項目が ${diff} 件あります（公差の決まりがない項目）。条件変更なら「条件変更」にして理由と承認を入れてください。</div>`);
+  if(cdKind==="条件変更"&&!$("#cdReason").value.trim())w.push(`<div class="warnbox">条件変更は「変更理由」を入れてください。</div>`);
+  if((cdKind==="条件変更"||out)&&!cdAppr)w.push(`<div class="warnbox">承認者がまだです（条件変更時は責任者の承認を得る事）。</div>`);
+  $("#cdWarn").innerHTML=w.join("");$("#cdCount").textContent=`${filled}/${CI.length} 項目`;
+}
+$("#cdRows").addEventListener("input",cdJudge);
+$("#cdKinds").onclick=e=>{const b=e.target.closest("button");if(b){cdKind=b.dataset.k;renderCdMeta();cdJudge();}};
+$("#cdBy").onclick=e=>{const b=e.target.closest("button");if(b){cdBy=b.dataset.p;renderCdMeta();}};
+$("#cdAppr").onclick=e=>{const b=e.target.closest("button");if(b){cdAppr=b.dataset.p;renderCdMeta();cdJudge();}};
+$("#cdShots").addEventListener("input",renderCdMeta);$("#cdReason").addEventListener("input",cdJudge);
+$("#cdPrev").onclick=()=>{const last=condsOf(cdCtx.code).filter(x=>x.id!==cdId).pop();if(!last){toast("前回の記録がありません");return;}document.querySelectorAll("#cdRows [data-cv]").forEach(i=>i.value=last.v[i.dataset.cv]??"");cdJudge();toast(`前回（${last.date} ${last.t}）の値を入れました。実際の値に直してください`);};
+$("#cdBaseFill").onclick=()=>{const m=mold(cdCtx.code);if(!m||!m.cond){toast("基準条件がありません");return;}document.querySelectorAll("#cdRows [data-cv]").forEach(i=>{if(i.value.trim()==="")i.value=m.cond.v[i.dataset.cv]??"";});cdJudge();toast("空欄に基準値を入れました。違う所だけ直してください");};
+function closeCd(){closeSheets();if(tlId){openSheet("#tlSheet");renderTl();}}
+$("#cdClose").onclick=closeCd;
+$("#sheetBg").onclick=()=>{tlId=null;closeSheets();};
+$("#cdSave").onclick=()=>{
+  if(!cdBy){toast("記録者を選んでください");return;}
+  const v={};document.querySelectorAll("#cdRows [data-cv]").forEach(i=>{const x=i.value.trim();v[i.dataset.cv]=x===""?"":(isNaN(+x)?x:+x);});
+  if(!Object.values(v).some(x=>x!=="")){toast("値を入れてください（数字でハッキリ）");return;}
+  const r={id:cdId||uid(),date:cdCtx.date,mc:cdCtx.mc,code:cdCtx.code,chId:cdCtx.chId||"",t:$("#cdT").value||nowHM(),kind:cdKind,v,
+    base:(()=>{const m=mold(cdCtx.code);return m&&m.cond?{setDate:m.cond.setDate,v:Object.assign({},m.cond.v),tol:Object.assign({},m.cond.tol||{})}:null;})(),shots:$("#cdShots").value===""?"":+$("#cdShots").value,lot:$("#cdLot").value.trim(),reason:$("#cdReason").value.trim(),by:cdBy,appr:cdAppr};
+  const i=state.conds.findIndex(x=>x.id===r.id);if(i>=0)state.conds[i]=r;else state.conds.push(r);
+  if(r.chId){const c=state.changes.find(x=>x.id===r.chId);if(c){c.tl=c.tl||{};if(!c.tl.p3c)c.tl.p3c={t:r.t,by:r.by};}}
+  state.ui.me=cdBy;save();closeCd();render();
+  const is=recIssues(r);toast(is.out?"記録しました（公差外あり：責任者に報告）":is.needAppr?"記録しました（承認待ち）":"記録しました");
+};
+$("#cdDel").onclick=()=>{const b=$("#cdDel");if(!b.dataset.arm){b.dataset.arm="1";b.textContent="もう一度押すと削除";setTimeout(()=>{b.dataset.arm="";b.textContent="削除";},2500);return;}state.conds=state.conds.filter(x=>x.id!==cdId);b.dataset.arm="";b.textContent="削除";save();closeCd();render();};
+
+/* 条件の一覧（記録表の形） */
+function condMatrix(code,limit){
+  const m=mold(code)||{};const c=m.cond;const rs=condsOf(code).slice(-(limit||8));
+  let h=`<table class="cm"><thead><tr><th class="l">項目</th><th>基準</th><th>公差</th>${rs.map(r=>{const is=recIssues(r);return`<th data-cid="${r.id}" class="${is.out?"j-out":is.needAppr?"j-diff":""}">${esc(r.date.slice(5).replace("-","/"))}<br>${esc(r.t)}<br><small>${esc(r.kind)}</small></th>`;}).join("")}</tr></thead><tbody>`;
+  CI.forEach(([k,g,s,u])=>{h+=`<tr><td class="l">${esc(g||"")}${g&&s?" ":""}${esc(s)} <span class="muted">${esc(unitOf(c,u))}</span></td><td>${esc(c?c.v[k]??"":"")}</td><td>${c&&c.tol&&c.tol[k]!==""&&c.tol[k]!=null?"±"+esc(c.tol[k]):"−"}</td>${rs.map(r=>{const j=judge(r.base||c,k,r.v[k]);return`<td class="${j==="out"?"j-out":j==="diff"?"j-diff":""}">${esc(r.v[k]??"")}</td>`;}).join("")}</tr>`;});
+  const extra=[["捨てショット",r=>r.shots!==""&&r.shots!=null?r.shots+"×"+(m.cav||1):""],["材料ロット",r=>r.lot],["変更理由",r=>r.reason],["記録者",r=>r.by],["承認者",r=>r.appr||"（未）"]];
+  extra.forEach(([n,f])=>{h+=`<tr><td class="l">${n}</td><td></td><td></td>${rs.map(r=>`<td>${esc(f(r)||"")}</td>`).join("")}</tr>`;});
+  return h+"</tbody></table>";
+}
+function condPrintHTML(code){
+  const m=mold(code)||{};const c=m.cond||{v:{},tol:{}};
+  return`<div class="pp p-cd"><style>@page{size:A4 portrait;margin:8mm}</style><h1>成 形 条 件 記 録 表</h1>
+  <table class="hd"><tr><td>整番コード</td><td class="v">${esc(code)}</td><td>製品名</td><td>${esc(m.name||"")}</td><td>基準条件設定日</td><td class="v">${esc(c.setDate||"")}</td></tr>
+  <tr><td>号機</td><td>${esc(c.label||m.mc||"")}</td><td>使用材料</td><td>${esc(m.mat||"")} ${esc(m.grade||"")} ${esc(m.color||"")}${m.mb?" 調色材"+esc(m.mb)+(m.mbg?" "+esc(m.mbg)+"g/kg":""):""}</td><td>成形機</td><td>${esc(c.mcName||"")}　ショート下限圧 ${esc(c.shortP??"")}　バリ上限圧 ${esc(c.flashP??"")}</td></tr></table>
+  ${condMatrix(code,8)}
+  <div class="rules">＊成形ロット開始時、条件変更時には必ず記録をとる事。　＊条件変更時は責任者の承認を得る事。<br>＊記録は数字でハッキリ記入の事（レ点等不可）。　＊公差を外れた時は、責任者に報告する事。　（網掛け＝公差外、斜体＝基準と違う）</div></div>`;
+}
+
+/* ---------- 成形開始タイムライン ---------- */
+const TLP=[ // 成形開始作業手順書（2018.10.15制定 △1 24.08.06）
+  {g:"1) 事前準備",items:[["p1a","標準類（製造仕様書・基準条件表・見本サンプル）を準備"],["p1b","記録類（作業日報・成形条件記録書・現品票等）を準備"]]},
+  {g:"2) 段取り① 金型・付帯設備",items:[["p2a","金型取扱い手順に基づき、準備し設定"],["p2b","付帯設備（取出し機・金型温調機・粉砕機・ベルトコンベアー・ホッパードライヤー等）を準備"]]},
+  {g:"段取り② 材料を替える",items:[["p3","パージ手順書に基づき、パージを行う",0,"purge"]]},
+  {g:"段取り③ 材料投入",items:[["p4a","ホッパー・ローダーを清掃手順に基づき清掃"],["p4b","次材料をホッパーに投入（ホッパーローダーをセット）"],["p4c","パージダンゴでムラ・筋が無いことを確認",1,"","異材混入による外観・機能不良"]]},
+  {g:"段取り④ 成形条件設定・確認",items:[["p5a","基準条件表に基づき条件入力（呼び出し）、基準条件表と相違なき事"],["p5b","金型温度を測定し、基準温度まで上昇していることを確認"]]},
+  {g:"段取り⑤ 成形開始",items:[["p6a","成形開始手順に基づき成形を行う"],["p6b","安定するまで打ち込み（監視モニター幅内・見本サンプルと比較し外観・形状に異常なし）"],["p6c","監視モニターの設定を行う（監視モニター幅設定基準）",1,"","成形不良品が流出"]]},
+  {g:"3) 量産成形開始・品質確認",items:[["p3a","量産受け箱に残留品が無い事を確認し、量産受箱に変更（廃棄品箱・赤箱内品は廃棄）"],["p3b","成形機上・周辺・シューター・ホース等に製品が引っ掛かっていないか確認"],["p3c","成形条件を成形条件記録書に記録（基準条件と同等の事）",0,"cond"],["p3d","量産開始1ショット目を仕様書項目検査サンプルとして残し、検査（測定）・記録",1,"","品質保証ができない"],["p3e","量産開始100ショットは打出し品カード表示（100ショット個別検査）"]]},
+];
+let tlId=null;
+function tlItems(c){const fm=matOf(fromOf(c)),tm2=matOf(c.to);const purge=!(fm&&tm2&&fm===tm2);
+  const out=[];TLP.forEach(g=>g.items.forEach(([k,n,risk,flag,rt])=>{if(flag==="purge"&&!purge&&fm&&tm2)return;out.push({k,n,risk,flag,rt,g:g.g});}));return out;}
+function tlProgress(c){const it=tlItems(c);const tl=c.tl||{};return{done:it.filter(x=>tl[x.k]).length,n:it.length};}
+function absMin(base,t){let x=tm(t);if(x==null)return null;if(base!=null&&x<base-180)x+=1440;return x;}
+function tlEvents(c){
+  const base=tm(c.tPrep)??tm(c.tChange)??(()=>{const s=STEPS.map(([k])=>c.act[k]&&c.act[k].s).filter(Boolean)[0];return tm(s);})();
+  const ev=[];
+  STEPS.forEach(([k,n])=>{const a=c.act[k]||{};if(a.s)ev.push({t:a.s,n:n+" 開始",cls:"st"});if(a.e)ev.push({t:a.e,n:n+" 終了",cls:"st"});});
+  tlItems(c).forEach(x=>{const v=(c.tl||{})[x.k];if(v)ev.push({t:v.t,n:x.n,by:v.by,cls:x.risk?"risk":"cp"});});
+  state.conds.filter(r=>r.chId===c.id||(r.date===c.date&&r.mc===c.mc&&r.code===c.to)).forEach(r=>{const is=recIssues(r);ev.push({t:r.t,n:`条件記録（${r.kind}）${is.out?" 公差外"+is.out:""}`,by:r.by,cls:is.out?"risk":"cd"});});
+  const ct=c.chkT||{};[["box","量産受け箱 残留品なし"],["c30","30分後チェック"],["c60","1時間後チェック"]].forEach(([k,n])=>{if(c.chk[k]&&ct[k])ev.push({t:ct[k],n,cls:"cp"});});
+  ev.forEach(e=>e.m=absMin(base,e.t));
+  return{base,ev:ev.filter(e=>e.m!=null).sort((a,b)=>a.m-b.m)};
+}
+function openTl(id){tlId=id;renderTl();openSheet("#tlSheet");}
+function renderTl(){
+  const c=state.changes.find(x=>x.id===tlId);if(!c)return;
+  const fm=fromOf(c);const p=tlProgress(c);const{base,ev}=tlEvents(c);
+  $("#tlTitle").textContent=`${c.mc}号機 ${fm||"—"} → ${c.to}　成形開始タイムライン`;
+  // ガント
+  const plan=[["清掃",c.tPrep,c.tChange],["型替〜量産",c.tChange,c.tMass]].map(([n,a,b])=>({n,a:absMin(base,a),b:absMin(base,b)})).filter(x=>x.a!=null&&x.b!=null);
+  const nowM=absMin(base,nowHM());const isToday=c.date===ymd(new Date());
+  const act=STEPS.map(([k,n],i)=>{const a=c.act[k]||{};const s=absMin(base,a.s);if(s==null)return null;let e=absMin(base,a.e);
+    if(e==null){const nx=STEPS.slice(i+1).map(([kk])=>c.act[kk]&&c.act[kk].s).find(Boolean);e=nx?absMin(base,nx):(isToday?Math.max(s+1,nowM):s+1);}
+    return{n,a:s,b:e,k};}).filter(Boolean);
+  const all=[...plan.flatMap(x=>[x.a,x.b]),...act.flatMap(x=>[x.a,x.b]),...ev.map(e=>e.m)];
+  let h="";
+  if(all.length){
+    const lo=Math.floor((Math.min(...all)-10)/30)*30,hi=Math.ceil((Math.max(...all)+10)/30)*30;const W=hi-lo;
+    const pos=m=>((m-lo)/W*100).toFixed(2)+"%";const wid=(a,b)=>(Math.max(.6,(b-a)/W*100)).toFixed(2)+"%";
+    const ticks=[];for(let t=lo;t<=hi;t+=30)ticks.push(t);
+    const col={prep:"#8a6d3b",change:"var(--run)",uchi:"var(--warn)",mass:"var(--ok)",dim:"var(--accent)"};
+    h+=`<div class="gantt"><div class="gx">${ticks.map(t=>`<span style="left:${pos(t)}">${hm(t)}</span>`).join("")}</div>
+      <div class="gr"><div class="gl">予定</div><div class="gb">${plan.map(x=>`<i class="plan" style="left:${pos(x.a)};width:${wid(x.a,x.b)}">${x.n}</i>`).join("")}</div></div>
+      <div class="gr"><div class="gl">実績</div><div class="gb">${act.map(x=>`<i style="left:${pos(x.a)};width:${wid(x.a,x.b)};background:${col[x.k]}" title="${x.n}">${x.n.replace("（清掃）","")}</i>`).join("")}</div></div>
+      <div class="gr"><div class="gl">手順</div><div class="gb">${ev.filter(e=>e.cls!=="st").map(e=>`<b class="mk ${e.cls}" style="left:${pos(e.m)}" title="${esc(e.t+" "+e.n)}"></b>`).join("")}</div></div>
+      ${isToday&&nowM>=lo&&nowM<=hi?`<div class="gnow" style="left:calc(64px + (100% - 64px) * ${((nowM-lo)/W).toFixed(4)})"></div>`:""}</div>`;
+    const ms=c.act.mass&&c.act.mass.s?absMin(base,c.act.mass.s):null,pm=absMin(base,c.tMass),ps=absMin(base,c.tPrep);
+    const s0=c.act.prep&&c.act.prep.s?absMin(base,c.act.prep.s):null;
+    h+=`<div class="kpis" style="margin-top:8px">
+      <div class="kpi"><div class="k">手順チェック</div><div class="v">${p.done}/${p.n}</div></div>
+      <div class="kpi"><div class="k">清掃開始→量産開始</div><div class="v">${s0!=null&&ms!=null?fmtMin(ms-s0):"—"}</div><div class="k">予定 ${ps!=null&&pm!=null?fmtMin(pm-ps):"—"}</div></div>
+      <div class="kpi"><div class="k">量産開始の遅れ</div><div class="v" style="${ms!=null&&pm!=null&&ms-pm>10?"color:var(--warn)":""}">${ms!=null&&pm!=null?fmtMin(ms-pm):"—"}</div></div></div>`;
+  }
+  // 手順チェック
+  const tl=c.tl||{};let lastG="";
+  h+=`<div class="sec-t">手順書チェック <span class="muted" style="font-weight:400">押すと時刻が入ります（もう一度押すと取り消し）</span></div><div class="cklist">`;
+  tlItems(c).forEach(x=>{
+    if(x.g!==lastG){h+=`<div class="tlg">${esc(x.g)}</div>`;lastG=x.g;}
+    const v=tl[x.k];
+    h+=`<div class="ckit ${v?"on":""}"><div class="tx">${x.risk?"<b style='color:var(--bad)'>【リスク】</b>":""}${esc(x.n)}${x.rt?`<div class="muted" style="color:var(--bad)">リスク：${esc(x.rt)}</div>`:""}${v?`<div class="muted">${esc(v.t)}　${esc(v.by||"")}</div>`:""}</div>
+      <div class="bt">${x.flag==="cond"?`<button class="ckb" data-tlcd="1">条件記録</button>`:""}<button class="ckb ${v?"on":""}" data-tl="${x.k}">${v?esc(v.t):"済"}</button></div></div>`;
+  });
+  h+=`</div>`;
+  // イベントログ
+  h+=`<div class="sec-t">タイムライン</div>`;
+  if(ev.length){let prev=null;h+=`<div class="tlog">`+ev.map(e=>{const d=prev!=null?e.m-prev:null;prev=e.m;return`<div class="te ${e.cls}"><span class="tt">${esc(e.t)}</span><span class="td">${d!=null?"+"+d+"分":""}</span><span class="tn">${esc(e.n)}${e.by?` <span class="muted">${esc(e.by)}</span>`:""}</span></div>`;}).join("")+`</div>`;}
+  else h+=`<div class="muted">まだ記録がありません。実績タブの［開始］［終了］や、上の手順チェックを押すと並びます。</div>`;
+  h+=`<div class="row" style="margin-top:12px"><button class="btn" data-tlcd="1">📝 条件を記録</button><button class="btn" id="tlPrint">🖨 タイムラインを印刷</button></div>`;
+  $("#tlBody").innerHTML=h;
+}
+$("#tlBody").addEventListener("click",e=>{
+  if(longFired)return;const c=state.changes.find(x=>x.id===tlId);if(!c)return;
+  const b=e.target.closest("[data-tl]");
+  if(b){c.tl=c.tl||{};const k=b.dataset.tl;if(c.tl[k])delete c.tl[k];else{c.tl[k]={t:nowHM(),by:state.ui.me||""};if(k==="p3a"){c.chk.box=true;c.chkT=c.chkT||{};c.chkT.box=c.tl[k].t;}}save();renderTl();if(state.ui.tab==="act")renderAct();return;}
+  if(e.target.closest("[data-tlcd]")){openCd({date:c.date,mc:c.mc,code:c.to,chId:c.id});return;}
+  if(e.target.closest("#tlPrint")){doPrint(`<div class="pp p-tl"><style>@page{size:A4 portrait;margin:10mm}</style><h1>成形開始タイムライン　${md(c.date)}</h1>${$("#tlBody").innerHTML.replace(/<button[^>]*>.*?<\/button>/g,"")}</div>`);}
+});
+$("#tlClose").onclick=()=>{tlId=null;closeSheets();};
+
+$("#cdCsv").onclick=()=>{const[f,t]=statRange();const rs=state.conds.filter(r=>r.date>=f&&r.date<=t).sort((a,b)=>(a.date+a.t).localeCompare(b.date+b.t));
+  const rows=[["日付","時刻","号機","整番","種別",...CI.map(([k,g,s])=>(g||"")+s),"公差外","基準と違う","捨てショット","材料ロット","変更理由","記録者","承認者"]];
+  rs.forEach(r=>{const is=recIssues(r);rows.push([r.date,r.t,r.mc,r.code,r.kind,...CI.map(([k])=>r.v[k]??""),is.out,is.diff,r.shots,r.lot,r.reason,r.by,r.appr]);});
+  const csv="\uFEFF"+rows.map(r=>r.map(v=>{v=String(v??"");return/[",\n]/.test(v)?'"'+v.replace(/"/g,'""')+'"':v;}).join(",")).join("\r\n");dl(csv,`成形条件記録_${f}_${t}.csv`,"text/csv");};
+/* ---------- 集計 ---------- */
+function statRange(){if(!$("#stFrom").value){$("#stTo").value=ymd(new Date());$("#stFrom").value=addDays(ymd(new Date()),-30);}return[$("#stFrom").value,$("#stTo").value];}
+function metrics(c){
+  const a=c.act||{};const g=k=>a[k]||{};
+  const total=g("prep").s&&g("mass").s?dur(g("prep").s,g("mass").s):(g("change").s&&g("mass").s?dur(g("change").s,g("mass").s):null);
+  const plan=dur(c.tPrep,c.tMass);
+  const delay=g("mass").s&&c.tMass?dur(c.tMass,g("mass").s):null;
+  return{total,plan,delay,prep:dur(g("prep").s,g("prep").e),chg:dur(g("change").s,g("change").e),uchi:dur(g("uchi").s,g("uchi").e)};
+}
+function avg(a){a=a.filter(x=>x!=null&&!isNaN(x));return a.length?a.reduce((s,x)=>s+x,0)/a.length:null;}
+function renderStat(){
+  const[f,t]=statRange();
+  const list=state.changes.filter(c=>c.date>=f&&c.date<=t);
+  const ms=list.map(c=>({c,m:metrics(c)}));
+  const rec=ms.filter(x=>x.m.total!=null);
+  const days=new Set(list.map(c=>c.date)).size;
+  const late=list.filter(c=>tm(c.tChange)!=null&&tm(c.tChange)>=state.set.late*60).length;
+  const sumLoss=rec.reduce((s,x)=>s+x.m.total,0);
+  $("#stKpi").innerHTML=[
+    ["型替え件数",list.length+"件",days?"1日あたり "+(list.length/days).toFixed(1)+"件":""],
+    ["実績が入った件数",rec.length+"件",list.length?Math.round(rec.length/list.length*100)+"%":""],
+    ["平均 型替ロス",fmtMin(avg(rec.map(x=>x.m.total))),"予定平均 "+fmtMin(avg(rec.map(x=>x.m.plan)))],
+    ["型替ロス合計",fmtMin(sumLoss),"機械が止まっていた時間"],
+    ["量産開始の平均遅れ",fmtMin(avg(ms.map(x=>x.m.delay))),"予定 → 実績"],
+    [state.set.late+"時以降の型替え",late+"件",""],
+  ].map(([k,v,s])=>`<div class="kpi"><div class="k">${k}</div><div class="v">${v}</div><div class="k">${s}</div></div>`).join("");
+  $("#stNote").innerHTML=!list.length?`<div class="muted">この期間の型替えはまだありません。</div>`:rec.length<list.length?`<div class="muted">実績（清掃開始と量産開始）が入った型替えだけで平均を出しています。</div>`:"";
+  // by machine
+  const grp=(fn)=>{const g={};ms.forEach(x=>{const k=fn(x.c);if(!k)return;(g[k]=g[k]||[]).push(x);});return g;};
+  const gm=grp(c=>c.mc);const mx=Math.max(1,...Object.values(gm).map(a=>avg(a.map(x=>x.m.total))||0));
+  $("#stMc").innerHTML=`<thead><tr><th>号機</th><th>件数</th><th>平均ロス</th><th>予定</th><th>平均遅れ</th><th>準備</th><th>型替</th><th>打出</th><th style="width:30%"></th></tr></thead><tbody>`+
+    Object.keys(gm).sort(mcSort).map(k=>{const a=gm[k];const av=avg(a.map(x=>x.m.total)),pl=avg(a.map(x=>x.m.plan));
+      return`<tr><td>${esc(k)}号機</td><td>${a.length}</td><td><b>${fmtMin(av)}</b></td><td>${fmtMin(pl)}</td><td>${fmtMin(avg(a.map(x=>x.m.delay)))}</td><td>${fmtMin(avg(a.map(x=>x.m.prep)))}</td><td>${fmtMin(avg(a.map(x=>x.m.chg)))}</td><td>${fmtMin(avg(a.map(x=>x.m.uchi)))}</td><td style="text-align:left">${av!=null?`<span class="bar ${pl!=null&&av>pl+10?"w":""}" style="width:${av/mx*100}%"></span>`:""}</td></tr>`;}).join("")+"</tbody>";
+  // hours
+  const hc=Array(24).fill(0);list.forEach(c=>{const x=tm(c.tChange);if(x!=null)hc[Math.floor(x/60)]++;});
+  const hmx=Math.max(1,...hc);const hs=[...Array(24).keys()].filter(h=>h>=6&&h<=23);
+  $("#stHours").innerHTML=hs.map(h=>`<div class="${h>=state.set.late?"late":""}" style="height:${hc[h]/hmx*100}%"><i>${hc[h]||""}</i><span>${h}</span></div>`).join("");
+  // molds
+  const gd=grp(c=>c.to);
+  const mr=Object.keys(gd).map(k=>({k,a:gd[k],av:avg(gd[k].map(x=>x.m.total))})).filter(x=>x.av!=null).sort((a,b)=>b.av-a.av).slice(0,10);
+  $("#stMold").innerHTML=`<thead><tr><th>金型（次の型）</th><th>件数</th><th>平均ロス</th><th>予定</th><th>材質</th></tr></thead><tbody>`+(mr.map(x=>`<tr><td>${esc(x.k)}</td><td>${x.a.length}</td><td><b>${fmtMin(x.av)}</b></td><td>${fmtMin(avg(x.a.map(y=>y.m.plan)))}</td><td>${esc(matOf(x.k))}</td></tr>`).join("")||`<tr><td colspan="5" class="muted">実績が入るとここに出ます</td></tr>`)+"</tbody>";
+  const gp=grp(c=>c.staff.change);
+  $("#stPpl").innerHTML=`<thead><tr><th>担当</th><th>件数</th><th>平均ロス</th><th>型替（工程）</th></tr></thead><tbody>`+(Object.keys(gp).sort((a,b)=>gp[b].length-gp[a].length).map(k=>`<tr><td>${esc(k)}</td><td>${gp[k].length}</td><td>${fmtMin(avg(gp[k].map(x=>x.m.total)))}</td><td>${fmtMin(avg(gp[k].map(x=>x.m.chg)))}</td></tr>`).join("")||`<tr><td colspan="4" class="muted">—</td></tr>`)+"</tbody>";
+}
+["#stFrom","#stTo"].forEach(s=>$(s).addEventListener("change",renderStat));
+$("#st30").onclick=()=>{$("#stTo").value=ymd(new Date());$("#stFrom").value=addDays(ymd(new Date()),-30);renderStat();};
+$("#stCsv").onclick=()=>{
+  const[f,t]=statRange();const list=state.changes.filter(c=>c.date>=f&&c.date<=t).sort((a,b)=>key(a)<key(b)?-1:1);
+  const hd=["日付","号機","種別","前の型","次の型","前材質","次材質","数量","予定_清掃開始","予定_型替開始","予定_量産開始"];
+  STEPS.forEach(([k,n])=>hd.push(n+"_担当",n+"_開始",n+"_終了"));hd.push("型替サブ","型替ロス(分)","予定(分)","量産開始の遅れ(分)","成形数","作業報告","受け箱確認","30分後","1時間後");
+  const rows=[hd];
+  list.forEach(c=>{const fm=fromOf(c);const m=metrics(c);const r=[c.date,c.mc,c.kind,fm,c.to,matOf(fm),matOf(c.to),c.qty,c.tPrep,c.tChange,c.tMass];
+    STEPS.forEach(([k])=>{const a=c.act[k]||{};r.push(c.staff[k]||"",a.s||"",a.e||"");});
+    r.push(c.staff.sub||"",m.total??"",m.plan??"",m.delay??"",c.count||"",c.note||"",c.chk.box?"✓":"",c.chk.c30?"✓":"",c.chk.c60?"✓":"");rows.push(r);});
+  const csv="﻿"+rows.map(r=>r.map(v=>{v=String(v??"");return/[",\n]/.test(v)?'"'+v.replace(/"/g,'""')+'"':v;}).join(",")).join("\r\n");
+  dl(csv,`型替実績_${f}_${t}.csv`,"text/csv");
+};
+function dl(text,name,type){const b=new Blob([text],{type});const a=document.createElement("a");a.href=URL.createObjectURL(b);a.download=name;document.body.appendChild(a);a.click();setTimeout(()=>{URL.revokeObjectURL(a.href);a.remove();},500);}
+
+/* ---------- マスタ ---------- */
+let mdCode=null;
+function renderMaster(){
+  const q=$("#msQ").value.trim().toUpperCase();
+  const ks=Object.keys(state.molds).sort().filter(k=>{if(!q)return true;const m=state.molds[k];return(k+" "+m.name+" "+m.mat+" "+m.mc).toUpperCase().includes(q);});
+  $("#msCount").textContent=Object.keys(state.molds).length+"型";
+  $("#msTbl").innerHTML=`<thead><tr><th>型名</th><th>製品名</th><th>材質</th><th>取数</th><th>号機</th><th>サイクル</th><th>乾燥</th><th>基準条件</th></tr></thead><tbody>`+
+    ks.slice(0,400).map(k=>{const m=state.molds[k];return`<tr data-k="${esc(k)}"><td><b>${esc(k)}</b></td><td>${esc(m.name)}</td><td>${esc(m.mat)}</td><td>${esc(m.cav)}</td><td>${esc(m.mc)}</td><td>${m.cyc?esc(m.cyc)+"秒":""}</td><td>${m.dryT?esc(m.dryT)+"℃":""}</td><td>${m.cond?"✓ "+esc(m.cond.setDate||""):""}</td></tr>`;}).join("")+"</tbody>";
+  if(document.activeElement!==$("#pplIn"))$("#pplIn").value=state.people.join("、");
+  $("#mcList").innerHTML=state.machines.slice().sort((a,b)=>mcSort(a.no,b.no)).map(m=>`<label class="f">${esc(m.no)}号機 に載っている型<input data-mc="${esc(m.no)}" list="moldList" value="${esc(m.cur)}" placeholder="型名"></label>`).join("");
+  fillMoldList();
+  $("#sPrep").value=state.set.prep;$("#sChg").value=state.set.chg;$("#sNippo").value=state.set.nippo;$("#sLate").value=state.set.late;$("#sHand").value=state.set.hand;
+}
+$("#msQ").addEventListener("input",renderMaster);
+$("#msTbl").addEventListener("click",e=>{if(longFired)return;const tr=e.target.closest("tr[data-k]");if(tr)openMd(tr.dataset.k);});
+$("#msAdd").onclick=()=>openMd(null);
+const MDF=[["code","mdCode"],["name","mdName"],["mat","mdMat"],["grade","mdGrade"],["color","mdColor"],["cav","mdCav"],["mc","mdMc"],["cyc","mdCyc"],["mb","mdMb"],["mbg","mdMbg"],["dryT","mdDryT"],["dryH","mdDryH"],["note","mdNote"]];
+function openMd(k){mdCode=k;const m=k?state.molds[k]:{};$("#mdTitle").textContent=k?"金型を修正":"金型を追加";$("#mdDel").style.display=k?"":"none";MDF.forEach(([f,id])=>$("#"+id).value=m[f]??"");openSheet("#mdSheet");}
+$("#mdClose").onclick=closeSheets;
+$("#mdBc").onclick=()=>{if(!mdCode){toast("先に金型を保存してください");return;}closeSheets();openBc(mdCode);};
+$("#mdSave").onclick=()=>{
+  const m={};MDF.forEach(([f,id])=>m[f]=$("#"+id).value.trim());
+  ["cav","cyc","mbg","dryT","dryH"].forEach(f=>{if(m[f]!=="")m[f]=+m[f];});
+  if(!m.code){toast("型名を入れてください");return;}
+  if(mdCode&&mdCode!==m.code){delete state.molds[mdCode];state.changes.forEach(c=>{if(c.to===mdCode)c.to=m.code;if(c.from===mdCode)c.from=m.code;});state.machines.forEach(x=>{if(x.cur===mdCode)x.cur=m.code;});}
+  state.molds[m.code]=m;save();closeSheets();renderMaster();toast("保存しました");
+};
+$("#mdDel").onclick=()=>{const b=$("#mdDel");if(!b.dataset.arm){b.dataset.arm="1";b.textContent="もう一度押すと削除";setTimeout(()=>{b.dataset.arm="";b.textContent="削除";},2500);return;}delete state.molds[mdCode];b.dataset.arm="";b.textContent="削除";save();closeSheets();renderMaster();};
+$("#pplIn").addEventListener("change",e=>{state.people=e.target.value.split(/[、,，\s]+/).map(s=>s.trim()).filter(Boolean);save();toast("担当者を保存しました");});
+$("#mcList").addEventListener("change",e=>{const mc=e.target.dataset.mc;const m=state.machines.find(x=>x.no===mc);if(m){m.cur=e.target.value.trim();save();}});
+$("#mcAdd").onclick=()=>{let n=1;const ex=new Set(state.machines.map(m=>m.no));while(ex.has(String(n)))n++;state.machines.push({no:String(n),cur:""});save();renderMaster();toast(n+"号機を追加しました");};
+[["#sHand","hand"],["#sPrep","prep"],["#sChg","chg"],["#sNippo","nippo"],["#sLate","late"]].forEach(([s,k])=>$(s).addEventListener("change",e=>{state.set[k]=e.target.type==="number"?+e.target.value:e.target.value;save();}));
+$("#bkOut").onclick=()=>dl(JSON.stringify(state,null,1),`型替えボード_バックアップ_${ymd(new Date())}.json`,"application/json");
+$("#bkIn").onclick=()=>$("#bkFile").click();
+$("#bkFile").onchange=async e=>{
+  const f=e.target.files[0];if(!f)return;
+  try{const s=JSON.parse(await f.text());
+    try{localStorage.setItem(KEY+"_before_"+ymd(new Date()),JSON.stringify(state));}catch(_){}
+    state=applyLoaded(s);seedConds(state);save();render();toast("読み込みました（前のデータは日付付きで端末に残しています）");
+  }catch(err){toast("読み込めないファイルです");}
+  e.target.value="";
+};
+$("#sample").onclick=()=>{
+  const d=state.ui.date;
+  if(!state.people.length)state.people=["Aさん","Bさん","Cさん","Dさん","Eさん","Fさん","Gさん"];
+  const S=[["10","23UH","04FN","08:00","08:10","09:30",5008,"Aさん","Aさん","Cさん","Cさん"],
+    ["11","03NK/NR","22KH/KT","09:00","09:10","10:10",2133,"Bさん","Aさん","","Cさん"],
+    ["12","13TA/TZ","3T0J/3U5K","10:00","10:10","10:50",293,"Bさん","Bさん","Dさん","Dさん"],
+    ["6","22ZA/23FE","HSD-22","14:00","14:10","14:50","", "Bさん","Dさん","Cさん","Dさん"],
+    ["12","3T0J/3U5K","4E5M","15:00","15:10","16:00",1920,"Bさん","Dさん","Cさん","Dさん"],
+    ["8","20VK","1259-30","15:00","15:10","16:10","","Eさん","Fさん","Cさん","Eさん"],
+    ["11","22KH/KT","08EF/EV-0","16:00","16:10","16:50","","Fさん","Fさん","Gさん","Gさん"]];
+  S.forEach(r=>{const[mc,fr,to,a,b,c2,q,p1,p2,sub,p3]=r;
+    const m=state.machines.find(x=>x.no===mc);if(m&&!m.cur&&!state.changes.some(x=>x.mc===mc))m.cur=fr;
+    if(!state.molds[to])state.molds[to]={code:to,name:"",mat:"",cav:"",mc,cyc:"",note:""};
+    state.changes.push({id:uid(),date:d,mc,kind:"通常",from:"",fromManual:false,to,tPrep:a,tChange:b,tMass:c2,qty:q,staff:{prep:p1,change:p2,sub,uchi:p3,mass:p3,dim:p3},act:{},chk:{},count:"",note:""});
+  });
+  save();showTab("shiji");toast("サンプルを入れました");
+};
+
+/* ---------- 日付 ---------- */
+$("#dPick").addEventListener("change",e=>{if(e.target.value){state.ui.date=e.target.value;save();render();}});
+$("#dPrev").onclick=()=>{state.ui.date=addDays(state.ui.date,-1);save();render();};
+$("#dNext").onclick=()=>{state.ui.date=addDays(state.ui.date,1);save();render();};
+$("#dToday").onclick=()=>{state.ui.date=ymd(new Date());save();render();};
+$("#tabs").onclick=e=>{const b=e.target.closest("button");if(b&&!longFired)showTab(b.dataset.t);};
+$("#helpBtn").onclick=()=>{if(!longFired)openSheet("#hpSheet");};
+$("#hpClose").onclick=closeSheets;
+
+/* ---------- 長押しヘルプ ---------- */
+const HELP=[
+  {s:"#tabs [data-t=week]",t:"週間",x:"号機×日の予定表。ここに入れるだけで、指示・実績・日報に反映されます。"},
+  {s:"#tabs [data-t=shiji]",t:"指示",x:"その日の型替指示書。今のExcelと同じ並びで印刷できます。"},
+  {s:"#tabs [data-t=act]",t:"実績",x:"現場で［開始］［終了］を押して時刻を記録します。"},
+  {s:"#tabs [data-t=nippo]",t:"日報",x:"成形日報をタブレットで記録します（巡回・打出確認・材料・型温・異常）。記入済みで印刷もできます。"},
+  {s:"#tabs [data-t=stat]",t:"集計",x:"型替ロス（清掃開始〜量産開始）を号機・金型・担当別に集計します。"},
+  {s:"#tabs [data-t=master]",t:"マスタ",x:"金型・担当者・号機・標準時間・バックアップ。"},
+  {s:"#wkTbl td",t:"マス",x:"押すとこの号機・この日に型替えを追加します。▶はその日の朝に載っている型です。"},
+  {s:".chip",t:"型替えチップ",x:"型替開始の時刻と次の型。青＝予定、緑＝完了、オレンジ＝遅い時間の型替え。押すと修正。"},
+  {s:"#wkTbl th[data-day]",t:"日付",x:"押すとその日の型替指示書を開きます。"},
+  {s:".tb",t:"開始／終了",x:"押すと今の時刻が入ります。入った時刻を押すと直せます。次の工程の開始を押すと、前の工程の終了も自動で入ります。"},
+  {s:".ck",t:"チェック",x:"量産開始から30分後・1時間後の製品チェック。時間が来るとオレンジになります。"},
+  {s:"#sjPrint",t:"印刷",x:"A4横、1枚に6件まで。実績を入れた後に印刷すると実績欄が埋まります。"},
+  {s:"#npPrint",t:"日報印刷",x:"1号機1枚（A4縦）。タブレットで記録した内容は記入済みで出ます。"},
+  {s:".npc",t:"号機カード",x:"押すとその号機の日報を記録する画面。赤＝NGか材料不一致、オレンジ＝巡回が2時間以上空いています。"},
+  {s:"#ndAddPt",t:"巡回を記録",x:"2時間ごとの見回り。材料・袋の残数は前回の値が入るので、−／＋で直すだけです。"},
+  {s:".slots",t:"時間割",x:"日報の2時間の枠。緑＝記録済み、赤＝NG、オレンジ枠＝まだの枠。"},
+  {s:"#npFuri",t:"ふりがな",x:"日報の項目に読みがなを付けます。外国人スタッフ向け。"},
+  {s:".stepper",t:"残数",x:"−／＋で1ずつ変わります。数字を押して直接入れることもできます。"},
+  {s:"#stCsv",t:"CSV",x:"期間内の型替えを全部、Excelで開ける形で書き出します。"},
+  {s:"#edFrom",t:"前の型",x:"同じ号機の1つ前の型替えから自動で入ります。手で直すとその値を使います。"},
+  {s:"#helpBtn",t:"使い方",x:"よくある質問と使い方。"},
+  {s:"[data-tlo]",t:"タイムライン",x:"成形開始作業手順書の項目を押して時刻を残し、予定と実績の帯・時刻の並びで見られます。"},
+  {s:"[data-cdo]",t:"条件記録",x:"成形条件記録表と同じ項目。基準と公差で自動判定し、公差外は赤で出ます。"},
+  {s:"#cdBaseFill",t:"基準値を入れる",x:"空欄に基準値を入れます。実際と違う所だけ直してください。"},
+  {s:"#cdPrev",t:"前回の値",x:"この型の前回の記録を入れます。"},
+];
+let longFired=false,lpT=null,lpX=0,lpY=0;
+document.addEventListener("pointerdown",e=>{
+  longFired=false;const h=HELP.find(h=>e.target.closest(h.s));if(!h)return;
+  lpX=e.clientX;lpY=e.clientY;
+  lpT=setTimeout(()=>{longFired=true;showTip(h,e.clientX,e.clientY);},550);
+});
+document.addEventListener("pointermove",e=>{if(lpT&&Math.hypot(e.clientX-lpX,e.clientY-lpY)>10){clearTimeout(lpT);lpT=null;}});
+document.addEventListener("pointerup",()=>{clearTimeout(lpT);lpT=null;if(longFired)setTimeout(()=>{longFired=false;},350);});
+document.addEventListener("contextmenu",e=>{if(HELP.some(h=>e.target.closest(h.s)))e.preventDefault();});
+function showTip(h,x,y){const t=$("#tip");t.innerHTML=`<b>${esc(h.t)}</b>${esc(h.x)}`;t.style.display="block";const w=t.offsetWidth,hh=t.offsetHeight;t.style.left=Math.max(8,Math.min(innerWidth-w-8,x-w/2))+"px";t.style.top=Math.max(8,y-hh-16)+"px";clearTimeout(t._t);t._t=setTimeout(()=>t.style.display="none",3500);}
+document.addEventListener("pointerdown",e=>{if(!e.target.closest("#tip"))$("#tip").style.display="none";},true);
+
+/* ---------- start ---------- */
+load();
+showTab(state.ui.tab||"week");
+setInterval(()=>{if(state.ui.tab==="act"&&!document.activeElement.matches("input,textarea"))renderAct();},60000);
+</script>
+</body>
+</html>
